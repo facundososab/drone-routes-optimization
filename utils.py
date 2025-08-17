@@ -2,6 +2,9 @@
 
 import random
 import numpy as np
+import math
+from shapely.geometry import Point, Polygon
+import config
 
 def punto_en_poligono(punto, poligono):
     """Verifica si un punto está dentro de un polígono usando Ray Casting."""
@@ -33,6 +36,48 @@ def generar_puntos_aleatorios(cantidad, poligono):
         if punto_en_poligono([lat, lon], poligono):
             puntos.append([lat, lon])
     return puntos
+
+def generar_puntos_equiespaciados(num_estaciones, poligono, radio, k=30): #radio de aprox 300m en rosario
+    """
+    Genera puntos con Poisson Disk Sampling dentro de un polígono.
+    - radius: distancia mínima entre puntos
+    - k: intentos de rechazo (rejection_samples)
+    """
+
+    first_point = config.CENTRO_ROSARIO #El punto base va a ser el centro. A partir de ahi se van a empezar a buscar vecinos.
+
+    puntos = [first_point]
+    activos = [first_point] #PUNTOS CANDIDATOS A GENERAR VECINOS
+
+    while activos and len(puntos) < num_estaciones:
+        idx = random.randint(0, len(activos) - 1)
+        base_point = activos[idx]
+        found = False
+
+        for _ in range(k): #A cada puntoX activo se le va a intentar agregar puntos vecinos, si se rechazan k puntos cercanos
+            #porque no cumplen con la dist_min del radio, entonces se rechaza el puntoX
+
+            r = random.uniform(radio, 2 * radio) #genera un radio
+            theta = random.uniform(0, 2 * math.pi)# Se genera un ángulo aleatorio
+            #Construye el punto nuevo
+            new_point = (
+                base_point[0] + r * math.cos(theta), # lon
+                base_point[1] + r * math.sin(theta)  # lat
+            )
+
+            if punto_en_poligono(new_point, poligono):
+                # chequear distancia mínima con todos los puntos existentes
+                if all(math.dist(new_point, p) >= radio for p in puntos):
+                    puntos.append(new_point) #Agregamos al vecino valido
+                    activos.append(new_point)
+                    found = True
+                    break
+        if not found: #Ningun vecino fue valido
+            activos.pop(idx)
+            print("Se descarta el punto")
+
+    return puntos
+
 
 def encontrar_estacion_mas_cercana(punto, estaciones):
     """Encuentra la estación de carga más cercana a un punto dado."""

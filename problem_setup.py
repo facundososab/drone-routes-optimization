@@ -1,7 +1,7 @@
 # Funciones para generar los datos iniciales del problema.
 
 import random
-from utils import generar_puntos_aleatorios
+from utils import generar_puntos_aleatorios, generar_puntos_equiespaciados
 from config import PESO_MAX_PAQUETE # Asumiendo que PESO_MAX_PAQUETE está en config.py
 
 def generar_tareas(num_tareas, poligono):
@@ -17,4 +17,4 @@ def generar_drones(num_drones, poligono):
 
 def generar_estaciones_carga(num_estaciones, poligono):
     """Genera la lista de estaciones de carga."""
-    return generar_puntos_aleatorios(num_estaciones, poligono)
+    return generar_puntos_equiespaciados(num_estaciones, poligono, 0.009, 30)
