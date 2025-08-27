@@ -1,7 +1,7 @@
 # Contiene la lógica para simular una solución y calcular su fitness.
 
 import numpy as np
-from utils import encontrar_estacion_mas_cercana
+from points_generator import encontrar_estacion_mas_cercana
 import config
 
 def decodificar_cromosoma(individuo, tareas, drones):
@@ -10,16 +10,22 @@ def decodificar_cromosoma(individuo, tareas, drones):
     rutas_drones = {dron["id"]: [] for dron in drones}
     num_drones_reales = len(c_ii) + 1
     puntos_corte_extendidos = [0] + c_ii + [config.NUM_TAREAS]
-    for i in range(num_drones_reales):
-        idx_inicio = puntos_corte_extendidos[i]
-        idx_fin = puntos_corte_extendidos[i+1]
-        id_tareas_asignadas = c_i[idx_inicio:idx_fin]
+    for i in range(num_drones_reales): #Se asignan las tareas a cada dron
+        idx_inicio = puntos_corte_extendidos[i] #id de la tarea inicial
+        idx_fin = puntos_corte_extendidos[i+1] #id de la tarea final (no incluida)
+        id_tareas_asignadas = c_i[idx_inicio:idx_fin] 
         if i < len(drones):
-            rutas_drones[i] = [tareas[id_tarea] for id_tarea in id_tareas_asignadas]
+            rutas_drones[i] = [tareas[id_tarea] for id_tarea in id_tareas_asignadas] #Los IDs se asignan a las tareas reales
     return rutas_drones
+#Retorna por ejemplo:{
+#     0: [tarea4, tarea2],
+#     1: [tarea0, tarea3],
+#     2: [tarea1]
+# }
 
 def calcular_energia(L1, L2, L3, v, mpj):
     """
+    FUNCION OBJETIVO
     Calcula la energía consumida por un UAV durante una entrega,
     basado en el modelo matemático del paper.
     """
@@ -41,13 +47,18 @@ def calcular_energia(L1, L2, L3, v, mpj):
 
 def funcion_fitness(individuo, tareas, drones, estaciones_carga):
     rutas = decodificar_cromosoma(individuo, tareas, drones)
+#    Ej: rutas ={
+#     0: [tarea4, tarea2],
+#     1: [tarea0, tarea3],
+#     2: [tarea1]
+# }
     energia_total_flota = 0
-    tiempo_maximo = 0
+    tiempo_total = 0 # tiempo total de todos los drones
 
     for id_dron, tareas_asignadas in rutas.items():
         posicion_actual = drones[id_dron]["posicion_inicial"]
         bateria_actual = config.BATERIA_MAXIMA
-        tiempo_dron = 0
+        tiempo_dron = 0 #tiempo que tarda el dron en hacer todas sus tareas
         
         for tarea in tareas_asignadas:
             # 1. Definir distancias L1, L2, L3 para la tarea actual
@@ -67,7 +78,8 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
                 # Simular viaje a la estación (sin carga útil)
                 energia_viaje_carga = calcular_energia(L1=dist_a_carga, L2=0, L3=0, v=config.VELOCIDAD_DRON, mpj=0)
                 energia_total_flota += energia_viaje_carga
-                tiempo_dron += dist_a_carga / config.VELOCIDAD_DRON
+                tiempo_tarea = dist_a_carga / config.VELOCIDAD_DRON
+                tiempo_dron += tiempo_tarea
                 
                 # Carga y actualización de estado
                 bateria_actual = config.BATERIA_MAXIMA
@@ -77,17 +89,20 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
                 L1 = np.linalg.norm(np.array(posicion_actual) - np.array(tarea["pickup"]))
 
             # 4. Simular la ejecución de la tarea
-            energia_tarea_real = calcular_energia(L1=L1, L2=L2, L3=0, v=config.VELOCIDAD_DRON, mpj=tarea["peso"])
+            energia_tarea_real = calcular_energia(L1=L1, L2=L2, L3=0, v=config.VELOCIDAD_DRON, mpj=tarea["peso"]) #L3 no tendria que ser = L3segura? porque se podria volver a quedar sin bateria para el proximo viaje
             energia_total_flota += energia_tarea_real
             bateria_actual -= energia_tarea_real
-            tiempo_dron += (L1 + L2) / config.VELOCIDAD_DRON
+            tiempo_tarea = (L1 + L2) / config.VELOCIDAD_DRON
+            tiempo_dron += tiempo_tarea
             posicion_actual = tarea["dropoff"]
 
-        if tiempo_dron > tiempo_maximo:
-            tiempo_maximo = tiempo_dron
-            
+            if tiempo_tarea > tarea["tiempo_max"]:
+                return 1e-9 # Penalizar si no se cumple el tiempo máximo de la tarea
+
+        tiempo_total += tiempo_dron
+
     # Penalizar soluciones que dejen la batería en negativo (aunque no debería pasar con la lógica de recarga)
-    if energia_total_flota <= 0 or tiempo_maximo <= 0:
+    if energia_total_flota <= 0 or tiempo_total <= 0:
         return 1e-9 # Evitar división por cero y fitness negativo
 
-    return 1 / (energia_total_flota * tiempo_maximo)
+    return 1 / (energia_total_flota * tiempo_total)

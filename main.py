@@ -12,7 +12,7 @@ def run_optimization():
     estaciones = ps.generar_estaciones_carga(config.NUM_ESTACIONES, config.POLIGONO_ROSARIO)
 
     # 2. Iniciar el algoritmo genético
-    poblacion = ga.crear_poblacion_inicial()
+    poblacion = ga.crear_poblacion_inicial() #Contiene: [[ci,cii], [ci,cii], ...]
     mejor_solucion_global = None
     mejor_fitness_global = -1
 

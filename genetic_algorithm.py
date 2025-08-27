@@ -1,7 +1,9 @@
 # Contiene los operadores genéticos: selección, cruce y mutación.
-
 import random
 import config
+import utils.crossover as crossover
+import utils.selection as selection
+import utils.mutation as mutation
 
 def crear_individuo():
     """Crea un individuo de doble cromosoma."""
@@ -22,36 +24,14 @@ def crear_poblacion_inicial():
     return [crear_individuo() for _ in range(config.TAMANO_POBLACION)]
 
 def seleccion(poblacion, fitness_scores):
-    """Selección de padres (elitismo simple)."""
-    sorted_population = [x for _, x in sorted(zip(fitness_scores, poblacion), key=lambda pair: pair[0], reverse=True)]
-    return sorted_population[:len(poblacion) // 2]
+    """Selecciona padres usando selección por torneo y elitismo."""
+    padres = selection.elitism_selection(poblacion, fitness_scores)
+    while len(padres) < len(poblacion) // 2:
+        padre = selection.tournament_selection(poblacion, fitness_scores, k=3)
+        if padre not in padres:
+            padres.append(padre)
+    return padres
 
-def partial_mapped_crossover(padre1, padre2):
-    """Operador de cruce PMX."""
-    if padre1 == padre2:
-        return padre1, padre2
-    size = len(padre1)
-    hijo1, hijo2 = [-1]*size, [-1]*size
-    start, end = sorted(random.sample(range(size), 2))
-    hijo1[start:end+1] = padre1[start:end+1]
-    hijo2[start:end+1] = padre2[start:end+1]
-    for i in list(range(start)) + list(range(end + 1, size)):
-        if padre2[i] not in hijo1:
-            hijo1[i] = padre2[i]
-        else:
-            current_val = padre2[i]
-            while current_val in hijo1:
-                current_val = padre2[padre1.index(current_val)]
-            hijo1[i] = current_val
-    for i in list(range(start)) + list(range(end + 1, size)):
-        if padre1[i] not in hijo2:
-            hijo2[i] = padre1[i]
-        else:
-            current_val = padre1[i]
-            while current_val in hijo2:
-                current_val = padre1[padre2.index(current_val)]
-            hijo2[i] = current_val
-    return hijo1, hijo2
 
 def cruce(padres):
     """Genera descendencia a partir de los padres seleccionados."""
@@ -59,7 +39,7 @@ def cruce(padres):
     if len(padres) < 2: return padres
     for i in range(0, len(padres) - (len(padres) % 2), 2):
         padre1, padre2 = padres[i], padres[i+1]
-        c_i_hijo1, c_i_hijo2 = partial_mapped_crossover(padre1[0], padre2[0])
+        c_i_hijo1, c_i_hijo2 = crossover.pmx(padre1[0], padre2[0])
         corte_cruce = random.randint(0, len(padre1[1])) if len(padre1[1]) > 0 else 0
         c_ii_hijo1 = sorted(padre1[1][:corte_cruce] + padre2[1][corte_cruce:])
         c_ii_hijo2 = sorted(padre2[1][:corte_cruce] + padre1[1][corte_cruce:])
@@ -68,9 +48,24 @@ def cruce(padres):
     return descendencia
 
 def mutacion(individuo):
-    """Operador de mutación por intercambio (swap)."""
+    """
+    Orquesta la mutación para ambos cromosomas (orden y cortes)
+    con probabilidades independientes.
+    """
+    c_i, c_ii = individuo
+    
+    # 1. Mutar Cromosoma I (Orden de Tareas)
     if random.random() < config.PROBABILIDAD_MUTACION:
-        c_i = individuo[0]
-        idx1, idx2 = random.sample(range(len(c_i)), 2)
-        c_i[idx1], c_i[idx2] = c_i[idx2], c_i[idx1]
-    return individuo
+        # Elige aleatoriamente entre swap o inversión para variar la estrategia
+        if random.random() < 0.7: # 70% de probabilidad de hacer un swap simple
+            c_i = mutation.swap_mutation(c_i)
+        else: # 30% de probabilidad de hacer una inversión más disruptiva
+            c_i = mutation.reverse_segment(c_i)
+            
+    # 2. Mutar Cromosoma II (Asignación a Drones)
+    # Se usa una probabilidad diferente para no alterar la asignación tan a menudo
+    if random.random() < config.PROBABILIDAD_MUTACION:
+        c_ii = mutation.cuts_mutation(c_ii, config.NUM_TAREAS)
+        
+    return [c_i, c_ii]
+

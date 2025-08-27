@@ -1,9 +1,8 @@
-# Contiene funciones de utilidad, principalmente geométricas.
-
+# Contiene funciones para generar puntos aleatorios y equiespaciados dentro de un polígono,
+# así como para encontrar la estación de carga más cercana a un punto dado.
 import random
 import numpy as np
 import math
-from shapely.geometry import Point, Polygon
 import config
 
 def punto_en_poligono(punto, poligono):
