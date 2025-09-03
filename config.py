@@ -23,7 +23,7 @@ PROBABILIDAD_MUTACION = 0.2
 
 # --- PARÁMETROS DE LA SIMULACIÓN ---
 VELOCIDAD_DRON = 15  # m/s, variable de decisión
-BATERIA_MAXIMA = 5  # Aumentamos la capacidad para el modelo real
+BATERIA_MAXIMA = 10  # Aumentamos la capacidad para el modelo real
 BATERIA_RESERVA = BATERIA_MAXIMA * 0.05
 PESO_MAX_PAQUETE = 2.0  # kg, peso máximo del paquete
 

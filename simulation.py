@@ -54,7 +54,7 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
 # }
     energia_total_flota = 0
     tiempo_total = 0 # tiempo total de todos los drones
-    rutas_a_estacion = {} # Para registrar las rutas a estaciones de carga
+    #rutas_a_estacion = {} # Para registrar las rutas a estaciones de carga
 
     for id_dron, tareas_asignadas in rutas.items():
         posicion_actual = drones[id_dron]["posicion_inicial"]
@@ -70,19 +70,21 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
             L3_segura = np.linalg.norm(np.array(tarea["dropoff"]) - np.array(estacion_post_tarea))
             energia_L3_segura = calcular_energia(L1=L3_segura, L2=0, L3=0, v=config.VELOCIDAD_DRON, mpj=0)
 
-            energia_L3_segura = calcular_energia(L1=0, L2=0, L3=L3_segura, v=config.VELOCIDAD_DRON, mpj=tarea["peso"])
-
-            # 2. Calcular energía necesaria para la tarea y el viaje seguro a la estación
-            energia_requerida_total = calcular_energia(L1, L2, 0, config.VELOCIDAD_DRON, tarea["peso"])
+            # 2. Calcular energía necesaria para la tarea
+            energia_requerida_total = calcular_energia(L1, L2, L3_segura, config.VELOCIDAD_DRON, tarea["peso"])
 
             # 3. Condición de recarga
-            if energia_requerida_total > bateria_actual:
+            while energia_requerida_total > bateria_actual:
+                #Verificar si la bateria del dron esta cargada al 100% 
+                if bateria_actual == config.BATERIA_MAXIMA:
+                    return 1e-9 # Penalizar si no se cumple el tiempo máximo de la tarea
+                #Sino 
                 estacion_previa = encontrar_estacion_mas_cercana(posicion_actual, estaciones_carga)
-                rutas_a_estacion[id_dron] = estacion_previa
+                #rutas_a_estacion[id_dron] = estacion_previa
                 dist_a_carga = np.linalg.norm(np.array(posicion_actual) - np.array(estacion_previa))
                 # Simular viaje a la estación (sin carga útil)
-                energia_viaje_carga = calcular_energia(L1=dist_a_carga, L2=0, L3=0, v=config.VELOCIDAD_DRON, mpj=0)
-                energia_total_flota += energia_viaje_carga
+                energia_viaje_a_carga_previa = calcular_energia(L1=dist_a_carga, L2=0, L3=0, v=config.VELOCIDAD_DRON, mpj=0)
+                energia_total_flota += energia_viaje_a_carga_previa
                 tiempo_tarea = dist_a_carga / config.VELOCIDAD_DRON
                 tiempo_dron += tiempo_tarea
 
@@ -91,20 +93,26 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
                 # Carga y actualización de estado
                 bateria_actual = config.BATERIA_MAXIMA
                 posicion_actual = estacion_previa
+
+
+
                 # Recalcular L1 desde la nueva posición (la estación de carga)
                 L1 = np.linalg.norm(np.array(posicion_actual) - np.array(tarea["pickup"]))
+                energia_requerida_total = calcular_energia(L1, L2, L3_segura, config.VELOCIDAD_DRON, tarea["peso"])
+                
+            # if energia_requerida_total > bateria_actual:
+            #     return 1e-9 # Penalizar si no se cumple el tiempo máximo de la tarea
 
             # 4. Simular la ejecución de la tarea
-            energia_tarea_real = calcular_energia(L1=L1, L2=L2, L3=0, v=config.VELOCIDAD_DRON, mpj=tarea["peso"]) #L3 no tendria que ser = L3segura? porque se podria volver a quedar sin bateria para el proximo viaje
             #Esto asegura que se va a poder realizar la tarea actual, pero luego de esta tarea puede passar que el dron quede con muy poca batería y que no llegue a la próxima tarea, hay que verificar eso.
-            energia_total_flota += energia_tarea_real
-            bateria_actual -= energia_tarea_real
+            energia_total_flota += energia_requerida_total #+ energia a cagar previa (si hubo)
+            bateria_actual -= energia_requerida_total
             tiempo_tarea = (L1 + L2) / config.VELOCIDAD_DRON
-            tiempo_dron += tiempo_tarea
+            tiempo_dron += tiempo_tarea + (energia_viaje_a_carga_previa / config.VELOCIDAD_DRON)
             posicion_actual = tarea["dropoff"]
 
-            if bateria_actual <= energia_L3_segura:
-                return 1e-9 # Penalizar si no se cumple el tiempo máximo de la tarea
+            #if bateria_actual <= energia_L3_segura: #Ya no es necesario porque al principio validamos que si llegue a L3 luego de L2
+                #return 1e-9 # Penalizar si no se cumple el tiempo máximo de la tarea
                 
             #if tiempo_tarea > tarea["tiempo_max"]:
                 #return 1e-9 # Penalizar si no se cumple el tiempo máximo de la tarea
@@ -115,4 +123,4 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
     if energia_total_flota <= 0 or tiempo_total <= 0:
         return 1e-9 # Evitar división por cero y fitness negativo
 
-    return [1 / (energia_total_flota * tiempo_total), rutas_a_estacion]
+    return 1 / (energia_total_flota * tiempo_total)
