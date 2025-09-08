@@ -1,7 +1,7 @@
 # Contiene la lógica para simular una solución y calcular su fitness.
 
 import numpy as np
-from points_generator import encontrar_estacion_mas_cercana
+from points_generator import encontrar_estacion_mas_cercana, distancia_metros
 import config
 
 def decodificar_cromosoma(individuo, tareas, drones):
@@ -42,8 +42,13 @@ def calcular_energia(L1, L2, L3, v, mpj):
     # Término 3: Consumo por sustentación sin carga
     numerador3 = (L1 + L3) * np.sqrt((config.MASA_DRON * config.G)**3)
     term3 = numerador3 / sustentacion_const
-    
-    return (1 / config.EFICIENCIA_GLOBAL) * (term1 + term2 + term3)
+
+    energia_total = (1 / config.EFICIENCIA_GLOBAL) * (term1 + term2 + term3)
+
+    print(f"[calcular_energia] L1={L1:.2f}, L2={L2:.2f}, L3={L3:.2f}, v={v}, mpj={mpj} => "
+          f"term1={term1:.4f}, term2={term2:.4f}, term3={term3:.4f}, energia={energia_total:.4f}")
+
+    return energia_total
 
 def funcion_fitness(individuo, tareas, drones, estaciones_carga):
     """
@@ -53,7 +58,7 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
     rutas = decodificar_cromosoma(individuo, tareas, drones)
 
     energia_total_flota = 0
-    # Usaremos el "makespan": el tiempo que tarda en terminar el último dron.
+    # Usaremos el "makespan": el tiempo que tarda en terminar el último dron. Este sería el tiempo total de la generación (estaba mal acumular los tiempos porque las tareas se hacen en simultaneo)
     # Es una métrica más robusta para la optimización del tiempo total.
     makespan_flota = 0
 
@@ -65,8 +70,8 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
         for tarea in tareas_asignadas:
             # --- 1. EVALUACIÓN PROACTIVA DE ENERGÍA PARA LA TAREA ACTUAL ---
             # ¿Cuánta energía necesito desde mi posición actual para completar esta tarea?
-            L1 = np.linalg.norm(np.array(posicion_actual) - np.array(tarea["pickup"]))
-            L2 = np.linalg.norm(np.array(tarea["pickup"]) - np.array(tarea["dropoff"]))
+            L1 = distancia_metros(posicion_actual, tarea["pickup"])
+            L2 = distancia_metros(tarea["pickup"], tarea["dropoff"])
             energia_requerida = calcular_energia(L1, L2, 0, config.VELOCIDAD_DRON, tarea["peso"])
 
             # --- 2. DECISIÓN DE RECARGA ---
@@ -74,7 +79,7 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
                 # No tengo suficiente batería, debo recargar primero.
                 print("Batería insuficiente, buscando estación de recarga...", "Necesito:", energia_requerida, "Tengo:", bateria_actual)
                 estacion_cercana = encontrar_estacion_mas_cercana(posicion_actual, estaciones_carga)
-                dist_a_estacion = np.linalg.norm(np.array(posicion_actual) - np.array(estacion_cercana))
+                dist_a_estacion = distancia_metros(posicion_actual, estacion_cercana)
                 energia_a_estacion = calcular_energia(dist_a_estacion, 0, 0, config.VELOCIDAD_DRON, 0)
                 tarea["recarga_previa"] = estacion_cercana
 
@@ -89,7 +94,7 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
                 posicion_actual = estacion_cercana
                 
                 # Una vez en la estación, recalculamos la energía necesaria para la tarea.
-                L1 = np.linalg.norm(np.array(posicion_actual) - np.array(tarea["pickup"]))
+                L1 = distancia_metros(posicion_actual, tarea["pickup"])
                 energia_requerida = calcular_energia(L1, L2, 0, config.VELOCIDAD_DRON, tarea["peso"])
                 if energia_requerida > bateria_actual:
                     return 1e-9, float('inf') # Penalización: Aún no puede completar la tarea.
@@ -107,9 +112,10 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
                 return 1e-9, float('inf') # Penalización: Solución inviable por no cumplir el plazo.
 
             # --- 5. VERIFICACIÓN DE SEGURIDAD (OPCIONAL PERO RECOMENDADO) ---
-            # ¿Puede el dron, después de la entrega, llegar a una estación si fuera necesario?
+            # ¿Puede el dron, después de la entrega, llegar a una estación si fuera necesario? 
+            # Esto asegura que en caso de no poder completar la siguiente tarea, pueda ir a hacer la recarga previa antes de hacerla
             estacion_segura = encontrar_estacion_mas_cercana(posicion_actual, estaciones_carga)
-            dist_segura = np.linalg.norm(np.array(posicion_actual) - np.array(estacion_segura))
+            dist_segura = distancia_metros(posicion_actual, estacion_segura)
             energia_segura = calcular_energia(dist_segura, 0, 0, config.VELOCIDAD_DRON, 0)
             if bateria_actual < energia_segura:
                 return 1e-9, float('inf') # Penalización: El dron queda varado.
@@ -126,4 +132,5 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
     # El objetivo es minimizar la energía total y el tiempo máximo (makespan).
     # Devolvemos el fitness y la energía total para criterios de convergencia.
     fitness = 1 / (energia_total_flota * makespan_flota)
+    print(f"[fitness] energia={energia_total_flota:.2f}, fitness={fitness}")
     return fitness, energia_total_flota

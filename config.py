@@ -14,27 +14,28 @@ CENTRO_ROSARIO = np.mean(POLIGONO_ROSARIO, axis=0).tolist()
 
 # --- PARÁMETROS DEL ALGORITMO GENÉTICO ---
 NUM_TAREAS = 15
-NUM_DRONES = 5
+NUM_DRONES = 3
 NUM_ESTACIONES = 6
-TAMANO_POBLACION = 50
+TAMANO_POBLACION = 50 # cantidad de individuos (flotas) por generación
 PROBABILIDAD_MUTACION = 0.2
 EPSILON = 300  # Tolerancia de energía entre soluciones
 NUM_GENERACIONES = 1000
 NCONV = 200        # Número de generaciones sin mejora para considerar convergencia
 
 # --- PARÁMETROS DE LA SIMULACIÓN ---
-VELOCIDAD_DRON = 16  # m/s, variable de decisión
-BATERIA_MAXIMA = 680000  # Joules
-PESO_MAX_PAQUETE = 2.0  # kg, peso máximo del paquete
+VELOCIDAD_DRON = 10  # m/s
+PESO_MAX_PAQUETE = 2.7  # kg, peso máximo del paquete
 TIEMPO_MIN_MIN = 20  # minutos
 TIEMPO_MAX_MIN = 75  # minutos
 
-# --- PARÁMETROS FÍSICOS Y DEL DRON (para tu nueva función) ---
-MASA_DRON = 1 # mi, masa del dron en kg
-RHO = 1.225  # rho, densidad del aire en kg/m^3
-AREA_FRONTAL_DRON = 0.4  # Ad, en m^2
+# --- PARÁMETROS FÍSICOS DEL DRON Multirotor (DJI Matrice 300 RTK con 2 baterías TB60) ---
+BATERIA_MAXIMA = 2 * (274 * 3600) #[Joules] --> 2 (baterias) * (Wh de cada bateria * 3600 s para conversión de Wh a Joules) 
+MASA_DRON = 6.3 # [Kg] mi, masa del dron
+PAYLOAD_MAX = 2.7 # [Kg] mp, carga máxima del paquete del dron
+RHO = 1.225  # rho, densidad del aire en kg/m^3 al nivel del mar
+AREA_FRONTAL_DRON = 0.2  # m^2 (estimación: calibrar)
 COEFICIENTE_ARRASTRE = 1.0  # c_d, adimensional
 FIGURE_OF_MERIT = 0.7  # F_M, eficiencia del rotor, adimensional
-AREA_ROTOR = 0.2# Ar, área del rotor
+AREA_ROTOR = 0.89383 #[m^2] Ar, área del rotor
 EFICIENCIA_GLOBAL = 0.9 # eta, eficiencia global del sistema
 G = 9.81 # Aceleración gravitacional

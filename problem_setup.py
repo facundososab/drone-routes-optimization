@@ -12,10 +12,9 @@ def generar_tareas(num_tareas, poligono):
         "id": i,
         "pickup": pickups[i],
         "dropoff": dropoffs[i],
-        "peso": round(random.uniform(0.1, PESO_MAX_PAQUETE), 2),
+        "peso": round(random.uniform(0.1, PESO_MAX_PAQUETE), 2), # en kilos
         "tiempo_max": random.randint(TIEMPO_MIN_MIN * 60, TIEMPO_MAX_MIN * 60),  # en segundos
         "recarga_previa": None,
-        "recarga_posterior": None
     } for i in range(num_tareas)]
 
 def generar_drones(num_drones, poligono):

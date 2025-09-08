@@ -31,10 +31,7 @@ def visualizar_rutas(mejor_solucion, tareas, drones, poligono, estaciones_carga,
             puntos_ruta.append(tarea["pickup"])
             puntos_ruta.append(tarea["dropoff"])
 
-            if tarea["recarga_posterior"] is not None: #Si hay recarga posterior, se dibuja primero
-                folium.Marker(location=tarea["recarga_posterior"], popup=f"Recarga posterior Tarea {tarea['id']}", icon=folium.Icon(color="darkred", icon="charging-station", prefix='fa')
-                ).add_to(mapa)
-                puntos_ruta.append(tarea["recarga_posterior"])
+            
         folium.PolyLine(puntos_ruta, color=color_ruta, weight=2.5, opacity=1).add_to(mapa)
         
     mapa.save(filename)
