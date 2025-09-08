@@ -5,22 +5,22 @@ from points_generator import encontrar_estacion_mas_cercana, distancia_metros
 import config
 
 def decodificar_cromosoma(individuo, tareas, drones):
-    """Traduce un cromosoma a una lista de rutas para cada dron."""
+    """Traduce un cromosoma a una lista de IDs de tareas para cada dron."""
     c_i, c_ii = individuo
     rutas_drones = {dron["id"]: [] for dron in drones}
     num_drones_reales = len(c_ii) + 1
     puntos_corte_extendidos = [0] + c_ii + [config.NUM_TAREAS]
     for i in range(num_drones_reales): #Se asignan las tareas a cada dron
-        idx_inicio = puntos_corte_extendidos[i] #id de la tarea inicial
+        idx_inicio = puntos_corte_extendidos[i] #id de la tarea inicialz
         idx_fin = puntos_corte_extendidos[i+1] #id de la tarea final (no incluida)
         id_tareas_asignadas = c_i[idx_inicio:idx_fin] 
         if i < len(drones):
-            rutas_drones[i] = [tareas[id_tarea] for id_tarea in id_tareas_asignadas] #Los IDs se asignan a las tareas reales
+            rutas_drones[i] = id_tareas_asignadas # Devolvemos solo los IDs
     return rutas_drones
 #Retorna por ejemplo:{
-#     0: [tarea4, tarea2],
-#     1: [tarea0, tarea3],
-#     2: [tarea1]
+#     0: [4, 2],
+#     1: [0, 3],
+#     2: [1]
 # }
 
 def calcular_energia(L1, L2, L3, v, mpj):
@@ -62,12 +62,13 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
     # Es una métrica más robusta para la optimización del tiempo total.
     makespan_flota = 0
 
-    for id_dron, tareas_asignadas in rutas.items():
+    for id_dron, id_tareas_asignadas in rutas.items():
         posicion_actual = drones[id_dron]["posicion_inicial"]
         bateria_actual = config.BATERIA_MAXIMA
         tiempo_dron = 0
 
-        for tarea in tareas_asignadas:
+        for id_tarea in id_tareas_asignadas:
+            tarea = tareas[id_tarea] # Obtenemos la tarea original
             # --- 1. EVALUACIÓN PROACTIVA DE ENERGÍA PARA LA TAREA ACTUAL ---
             # ¿Cuánta energía necesito desde mi posición actual para completar esta tarea?
             L1 = distancia_metros(posicion_actual, tarea["pickup"])
@@ -87,7 +88,7 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
                 if bateria_actual < energia_a_estacion:
                     print(f"PENALIZACIÓN (Dron {id_dron}): No hay batería para llegar a la estación de carga. Falta: {energia_a_estacion - bateria_actual:.2f} J")
                     energia_total_flota += config.PENALTY_VALUE
-                    makespan_flota += config.PENALTY_VALUE # También penalizamos el tiempo
+                    tiempo_dron += config.PENALTY_VALUE # También penalizamos el tiempo
                     continue # Salta a la siguiente tarea, este dron no puede continuar esta ruta
 
                 # Simular viaje a la estación y recarga (el tiempo de recarga es 0).
@@ -102,7 +103,7 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
                 if energia_requerida > bateria_actual:
                     print(f"PENALIZACIÓN (Dron {id_dron}): Tarea imposible incluso con batería llena. Requiere: {energia_requerida:.2f} J")
                     energia_total_flota += config.PENALTY_VALUE
-                    makespan_flota += config.PENALTY_VALUE
+                    tiempo_dron += config.PENALTY_VALUE
                     continue # Salta a la siguiente tarea
 
             # --- 3. EJECUCIÓN DE LA TAREA ---
@@ -117,7 +118,7 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
             if tiempo_dron > tarea["tiempo_max"]:
                 print(f"PENALIZACIÓN (Dron {id_dron}): Plazo de entrega excedido. Tiempo: {tiempo_dron:.2f}s, Límite: {tarea['tiempo_max']}s")
                 energia_total_flota += config.PENALTY_VALUE
-                makespan_flota += config.PENALTY_VALUE
+                tiempo_dron += config.PENALTY_VALUE
                 # No continuamos, la tarea se hizo tarde pero se hizo.
 
             # --- 5. VERIFICACIÓN DE SEGURIDAD (OPCIONAL PERO RECOMENDADO) ---
@@ -129,7 +130,7 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
             if bateria_actual < energia_segura:
                 print(f"PENALIZACIÓN (Dron {id_dron}): Dron queda varado. Batería: {bateria_actual:.2f} J, Necesaria: {energia_segura:.2f} J")
                 energia_total_flota += config.PENALTY_VALUE
-                makespan_flota += config.PENALTY_VALUE
+                tiempo_dron += config.PENALTY_VALUE
                 continue # Salta a la siguiente tarea, este dron no puede continuar.
 
         # Actualizar el makespan de la flota
@@ -139,7 +140,8 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
     # --- CÁLCULO FINAL DEL FITNESS ---
     # Evitar divisiones por cero o valores no válidos.
     if energia_total_flota <= 0 or makespan_flota <= 0:
-        return 1e-9, float('inf')
+        energia_total_flota += config.PENALTY_VALUE
+        makespan_flota += config.PENALTY_VALUE
 
     # El objetivo es minimizar la energía total y el tiempo máximo (makespan).
     # Devolvemos el fitness y la energía total para criterios de convergencia.

@@ -67,15 +67,16 @@ def run_optimization():
         # Decodificar rutas de la mejor solución
         rutas_mejor = sim.decodificar_cromosoma(mejor_solucion_global, tareas, drones)
 
-        for id_dron, tareas_asignadas in rutas_mejor.items():
+        for id_dron, id_tareas_asignadas in rutas_mejor.items():
             print(f"\n--- Recorrido del Dron {id_dron} ---")
             posicion_actual = drones[id_dron]["posicion_inicial"]
             print(f"  Sale desde la base en {posicion_actual}")
 
-            for tarea in tareas_asignadas:
+            for id_tarea in id_tareas_asignadas:
+                tarea = tareas[id_tarea] # Se obtiene la tarea original
                 print(f"\n  -> Iniciando Tarea {tarea['id']}:")
                 
-                if tarea["recarga_previa"] is not None:
+                if tarea.get("recarga_previa") is not None:
                     print(f"     1) Va a estación de recarga previa en {tarea['recarga_previa']}")
                     posicion_actual = tarea["recarga_previa"]
 
