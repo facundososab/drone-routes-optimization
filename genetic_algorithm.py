@@ -39,12 +39,17 @@ def cruce(padres):
     if len(padres) < 2: return padres
     for i in range(0, len(padres) - (len(padres) % 2), 2):
         padre1, padre2 = padres[i], padres[i+1]
-        c_i_hijo1, c_i_hijo2 = crossover.pmx(padre1[0], padre2[0])
-        corte_cruce = random.randint(0, len(padre1[1])) if len(padre1[1]) > 0 else 0
-        c_ii_hijo1 = sorted(padre1[1][:corte_cruce] + padre2[1][corte_cruce:])
-        c_ii_hijo2 = sorted(padre2[1][:corte_cruce] + padre1[1][corte_cruce:])
-        descendencia.append([c_i_hijo1, c_ii_hijo1])
-        descendencia.append([c_i_hijo2, c_ii_hijo2])
+        if random.random() < config.PROBABILIDAD_CRUCE:
+            c_i_hijo1, c_i_hijo2 = crossover.pmx(padre1[0], padre2[0])
+            corte_cruce = random.randint(0, len(padre1[1])) if len(padre1[1]) > 0 else 0
+            c_ii_hijo1 = sorted(padre1[1][:corte_cruce] + padre2[1][corte_cruce:])
+            c_ii_hijo2 = sorted(padre2[1][:corte_cruce] + padre1[1][corte_cruce:])
+            descendencia.append([c_i_hijo1, c_ii_hijo1])
+            descendencia.append([c_i_hijo2, c_ii_hijo2])
+        else:
+            # --- No se cruzan, se copian los padres ---
+            descendencia.append((padre1))
+            descendencia.append((padre2))
     return descendencia
 
 def mutacion(individuo):

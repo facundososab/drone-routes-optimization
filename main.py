@@ -15,6 +15,7 @@ def run_optimization():
     poblacion = ga.crear_poblacion_inicial() #Contiene: [[ci,cii], [ci,cii], ...]
     mejor_solucion_global = None
     mejor_energia_global = -1
+    energia_mejor_anterior = None
 
     # Parámetros de parada flexibles
     nmax = config.NUM_GENERACIONES
@@ -30,17 +31,20 @@ def run_optimization():
 
         # Encontrar y guardar la mejor solución
         mejor_fitness_gen = max(fitness_scores)
+        print("Mejor fitness generación:", mejor_fitness_gen)
         idx_mejor = fitness_scores.index(mejor_fitness_gen)
         energia_mejor = energias[idx_mejor]
-        mejora_energia = abs(energia_mejor - mejor_energia_global) if mejor_energia_global != -1 else float('inf')
+        mejora_energia = abs(energia_mejor - energia_mejor_anterior) if energia_mejor_anterior is not None else float('inf')
 
-        # Criterio de convergencia (utilizamos unicamente la energía, por esto, la mejor energia no e necesariamente el mejor fitness)
+        # Criterio de convergencia: comparar con la generación anterior
         if mejora_energia > epsilon:
             mejor_energia_global = energia_mejor
+            print (f"Generación {gen+1}: Nueva mejor energía encontrada: {mejor_energia_global:.2f} (Fitness: {mejor_fitness_gen:.6f})")
             mejor_solucion_global = poblacion[idx_mejor]
             contador_convergencia = 0
         else:
             contador_convergencia += 1
+        energia_mejor_anterior = energia_mejor
 
         # Evolucionar la población
         padres = ga.seleccion(poblacion, fitness_scores)
@@ -49,8 +53,7 @@ def run_optimization():
             poblacion = descendencia + padres[:len(poblacion) - len(descendencia)]
             poblacion = [ga.mutacion(ind) for ind in poblacion]
 
-        if (gen + 1) % 10 == 0: 
-            print(f"Generación {gen+1}/{nmax} - Mejor Fitness: {mejor_fitness_gen:.6f} - Mejor Energía: {energia_mejor:.2f}")
+        print(f"Generación {gen+1}/{nmax} - Mejor Fitness: {mejor_fitness_gen} - Mejor Energía: {energia_mejor:.2f}")
         if contador_convergencia >= nconv:
             print(f"Convergencia alcanzada en la generación {gen+1}. Diferencia de energía: {mejora_energia:.4f} < {epsilon} por {contador_convergencia} generaciones.")
             break
@@ -81,10 +84,6 @@ def run_optimization():
 
                 print(f"     3) Va al Dropoff en {tarea['dropoff']}")
                 posicion_actual = tarea["dropoff"]
-
-                if tarea["recarga_posterior"] is not None:
-                    print(f"     4) Va a estación de recarga posterior en {tarea['recarga_posterior']}")
-                    posicion_actual = tarea["recarga_posterior"]
 
             print(f"\n  *** Dron {id_dron} termina en {posicion_actual} ***")
 

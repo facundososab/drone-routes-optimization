@@ -18,9 +18,13 @@ NUM_DRONES = 3
 NUM_ESTACIONES = 6
 TAMANO_POBLACION = 50 # cantidad de individuos (flotas) por generación
 PROBABILIDAD_MUTACION = 0.2
+PROBABILIDAD_CRUCE = 0.5
 EPSILON = 300  # Tolerancia de energía entre soluciones
 NUM_GENERACIONES = 1000
 NCONV = 200        # Número de generaciones sin mejora para considerar convergencia
+# --- Factor de Penalización ---
+# Valor grande para penalizar soluciones inviables.
+PENALTY_VALUE = 1e9
 
 # --- PARÁMETROS DE LA SIMULACIÓN ---
 VELOCIDAD_DRON = 10  # m/s
