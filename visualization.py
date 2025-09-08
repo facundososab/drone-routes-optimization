@@ -6,7 +6,7 @@ from simulation import decodificar_cromosoma
 def visualizar_rutas(mejor_solucion, tareas, drones, poligono, estaciones_carga, config, filename="rutas_drones_final.html"):
     """Dibuja el mapa de la mejor solución encontrada."""
     rutas_decodificadas = decodificar_cromosoma(mejor_solucion, tareas, drones)
-    mapa = folium.Map(location=list(config.CENTRO_ROSARIO), zoom_start=25)
+    mapa = folium.Map(location=list(config.CENTRO_ROSARIO), zoom_start=15)
     folium.Polygon(locations=poligono, color='black', weight=2, fill=True, fill_color='grey', fill_opacity=0.1, tooltip='Área de Operación').add_to(mapa)
     colores = ['blue', 'red', 'green', 'purple', 'orange', 'darkred', 'lightred', 'beige', 'darkblue', 'darkgreen', 'cadetblue']
     

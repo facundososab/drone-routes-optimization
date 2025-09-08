@@ -3,6 +3,8 @@ import problem_setup as ps
 import genetic_algorithm as ga
 import simulation as sim
 import visualization as vis
+import numpy as np
+from plotting import plot_fitness_evolution
 
 def run_optimization():
     """Función principal que orquesta la optimización."""
@@ -17,6 +19,11 @@ def run_optimization():
     mejor_energia_global = -1
     energia_mejor_anterior = None
 
+    # Listas para guardar el historial del fitness
+    max_fitness_history = []
+    avg_fitness_history = []
+    min_fitness_history = []
+
     # Parámetros de parada flexibles
     nmax = config.NUM_GENERACIONES
     epsilon = config.EPSILON
@@ -28,6 +35,11 @@ def run_optimization():
         resultados = [sim.funcion_fitness(ind, tareas, drones, estaciones) for ind in poblacion]
         fitness_scores = [r[0] for r in resultados]
         energias = [r[1] for r in resultados]
+        
+        # Guardar datos para el gráfico
+        max_fitness_history.append(np.max(fitness_scores))
+        avg_fitness_history.append(np.mean(fitness_scores))
+        min_fitness_history.append(np.min(fitness_scores))
 
         # Encontrar y guardar la mejor solución
         mejor_fitness_gen = max(fitness_scores)
@@ -60,6 +72,15 @@ def run_optimization():
 
     print("\n--- Optimización Finalizada ---")
     
+    # Generar y guardar el gráfico de evolución
+    if max_fitness_history:
+        plot_fitness_evolution(
+            max_fitness_history,
+            avg_fitness_history,
+            min_fitness_history,
+            len(max_fitness_history)
+        )
+
     # 3. Mostrar resultados
     if mejor_solucion_global:
         print(f"Mejor solución encontrada.")
