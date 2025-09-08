@@ -14,28 +14,46 @@ def run_optimization():
     # 2. Iniciar el algoritmo genético
     poblacion = ga.crear_poblacion_inicial() #Contiene: [[ci,cii], [ci,cii], ...]
     mejor_solucion_global = None
-    mejor_fitness_global = -1
+    mejor_energia_global = -1
 
+    # Parámetros de parada flexibles
+    nmax = config.NUM_GENERACIONES
+    epsilon = config.EPSILON
+    nconv = getattr(config, 'NCONV', 20)        # Si no existe, usa 20
+    contador_convergencia = 0
     print("--- Iniciando Optimización ---")
-    for gen in range(config.NUM_GENERACIONES):
+    for gen in range(nmax):
         # Evaluar la población
-        fitness_scores = [sim.funcion_fitness(ind, tareas, drones, estaciones) for ind in poblacion]
-        
+        resultados = [sim.funcion_fitness(ind, tareas, drones, estaciones) for ind in poblacion]
+        fitness_scores = [r[0] for r in resultados]
+        energias = [r[1] for r in resultados]
+
         # Encontrar y guardar la mejor solución
         mejor_fitness_gen = max(fitness_scores)
-        if mejor_fitness_gen > mejor_fitness_global:
-            mejor_fitness_global = mejor_fitness_gen
-            mejor_solucion_global = poblacion[fitness_scores.index(mejor_fitness_gen)]
-        
+        idx_mejor = fitness_scores.index(mejor_fitness_gen)
+        energia_mejor = energias[idx_mejor]
+        mejora_energia = abs(energia_mejor - mejor_energia_global) if mejor_energia_global != -1 else float('inf')
+
+        # Criterio de convergencia (utilizamos unicamente la energía, por esto, la mejor energia no e necesariamente el mejor fitness)
+        if mejora_energia > epsilon:
+            mejor_energia_global = energia_mejor
+            mejor_solucion_global = poblacion[idx_mejor]
+            contador_convergencia = 0
+        else:
+            contador_convergencia += 1
+
         # Evolucionar la población
         padres = ga.seleccion(poblacion, fitness_scores)
         descendencia = ga.cruce(padres)
         if descendencia:
             poblacion = descendencia + padres[:len(poblacion) - len(descendencia)]
             poblacion = [ga.mutacion(ind) for ind in poblacion]
-        
+
         if (gen + 1) % 10 == 0: 
-            print(f"Generación {gen+1}/{config.NUM_GENERACIONES} - Mejor Fitness: {mejor_fitness_global:.6f}")
+            print(f"Generación {gen+1}/{nmax} - Mejor Fitness: {mejor_fitness_gen:.6f} - Mejor Energía: {energia_mejor:.2f}")
+        if contador_convergencia >= nconv:
+            print(f"Convergencia alcanzada en la generación {gen+1}. Diferencia de energía: {mejora_energia:.4f} < {epsilon} por {contador_convergencia} generaciones.")
+            break
 
     print("\n--- Optimización Finalizada ---")
     

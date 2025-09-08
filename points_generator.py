@@ -4,6 +4,22 @@ import random
 import numpy as np
 import math
 import config
+from math import radians, sin, cos, sqrt, atan2
+
+def distancia_metros(coord1, coord2):
+    """Calcula la distancia en metros entre dos coordenadas (lat, lon)."""
+    R = 6371000  # Radio de la Tierra en metros
+    lat1, lon1 = map(radians, coord1)
+    lat2, lon2 = map(radians, coord2)
+
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+
+    a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+    return R * c
+
 
 def punto_en_poligono(punto, poligono):
     """Verifica si un punto está dentro de un polígono usando Ray Casting."""
@@ -79,6 +95,6 @@ def generar_puntos_equiespaciados(num_estaciones, poligono, radio, k=30): #radio
 
 
 def encontrar_estacion_mas_cercana(punto, estaciones):
-    """Encuentra la estación de carga más cercana a un punto dado."""
-    distancias = [np.linalg.norm(np.array(punto) - np.array(estacion)) for estacion in estaciones]
+    """Encuentra la estación de carga más cercana a un punto dado en metros."""
+    distancias = [distancia_metros(punto, estacion) for estacion in estaciones]
     return estaciones[np.argmin(distancias)]

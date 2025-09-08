@@ -2,13 +2,21 @@
 
 import random
 from points_generator import generar_puntos_aleatorios, generar_puntos_equiespaciados
-from config import PESO_MAX_PAQUETE # Asumiendo que PESO_MAX_PAQUETE está en config.py
+from config import PESO_MAX_PAQUETE, TIEMPO_MIN_MIN, TIEMPO_MAX_MIN # Asumiendo que PESO_MAX_PAQUETE está en config.py
 
 def generar_tareas(num_tareas, poligono):
     """Genera la lista de tareas."""
     pickups = generar_puntos_aleatorios(num_tareas, poligono)
     dropoffs = generar_puntos_aleatorios(num_tareas, poligono)
-    return [{"id": i, "pickup": pickups[i], "dropoff": dropoffs[i], "peso": round(random.uniform(0.1, 2.0), 2), "tiempo_limite": None, "recarga_previa": None, "recarga_posterior": None} for i in range(num_tareas)]
+    return [{
+        "id": i,
+        "pickup": pickups[i],
+        "dropoff": dropoffs[i],
+        "peso": round(random.uniform(0.1, PESO_MAX_PAQUETE), 2),
+        "tiempo_max": random.randint(TIEMPO_MIN_MIN * 60, TIEMPO_MAX_MIN * 60),  # en segundos
+        "recarga_previa": None,
+        "recarga_posterior": None
+    } for i in range(num_tareas)]
 
 def generar_drones(num_drones, poligono):
     """Genera la lista de drones con sus bases."""
