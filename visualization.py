@@ -21,16 +21,20 @@ def visualizar_rutas(mejor_solucion, tareas, drones, poligono, estaciones_carga,
         puntos_ruta = [drones[id_dron]["posicion_inicial"]]
         color_ruta = colores[id_dron % len(colores)]
         for i, tarea in enumerate(tareas_asignadas):
-            if tarea["recarga_previa"]: #Si hay recarga previa, se dibuja primero
+            if tarea["recarga_previa"] is not None: #Si hay recarga previa, se dibuja primero
                 folium.Marker(location=tarea["recarga_previa"], popup=f"Recarga previa Tarea {tarea['id']}", icon=folium.Icon(color="darkpurple", icon="charging-station", prefix='fa')
                 ).add_to(mapa)
-            puntos_ruta.append(tarea["recarga_previa"])
+                puntos_ruta.append(tarea["recarga_previa"])
 
             folium.Marker(location=tarea["pickup"], popup=f"Tarea {tarea['id']} Pickup", icon=folium.Icon(color=color_ruta, icon='box', prefix='fa')).add_to(mapa)
             folium.Marker(location=tarea["dropoff"], popup=f"Tarea {tarea['id']} Dropoff", icon=folium.Icon(color=color_ruta, icon='check-circle', prefix='fa')).add_to(mapa)
-
             puntos_ruta.append(tarea["pickup"])
             puntos_ruta.append(tarea["dropoff"])
+
+            if tarea["recarga_posterior"] is not None: #Si hay recarga posterior, se dibuja primero
+                folium.Marker(location=tarea["recarga_posterior"], popup=f"Recarga posterior Tarea {tarea['id']}", icon=folium.Icon(color="darkred", icon="charging-station", prefix='fa')
+                ).add_to(mapa)
+                puntos_ruta.append(tarea["recarga_posterior"])
         folium.PolyLine(puntos_ruta, color=color_ruta, weight=2.5, opacity=1).add_to(mapa)
         
     mapa.save(filename)

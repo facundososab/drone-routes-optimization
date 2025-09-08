@@ -54,8 +54,8 @@ def run_optimization():
             for tarea in tareas_asignadas:
                 print(f"\n  -> Iniciando Tarea {tarea['id']}:")
                 
-                if "recarga_previa" in tarea and tarea["recarga_previa"] is not None:
-                    print(f"     1) Va a estación de recarga en {tarea['recarga_previa']}")
+                if tarea["recarga_previa"] is not None:
+                    print(f"     1) Va a estación de recarga previa en {tarea['recarga_previa']}")
                     posicion_actual = tarea["recarga_previa"]
 
                 print(f"     2) Va al Pickup en {tarea['pickup']}")
@@ -63,6 +63,10 @@ def run_optimization():
 
                 print(f"     3) Va al Dropoff en {tarea['dropoff']}")
                 posicion_actual = tarea["dropoff"]
+
+                if tarea["recarga_posterior"] is not None:
+                    print(f"     4) Va a estación de recarga posterior en {tarea['recarga_posterior']}")
+                    posicion_actual = tarea["recarga_posterior"]
 
             print(f"\n  *** Dron {id_dron} termina en {posicion_actual} ***")
 
