@@ -55,6 +55,11 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
     Función de fitness refactorizada con lógica de recarga proactiva y
     verificación de tiempos de entrega.
     """
+    # Las tareas son globales para todas las generaciones.
+    # Entonces en cada generación, se deben reiniciar los campos de recarga de carga tarea.
+    for tarea in tareas:
+        tarea["recarga_previa"] = None
+        
     rutas = decodificar_cromosoma(individuo, tareas, drones)
 
     energia_total_flota = 0

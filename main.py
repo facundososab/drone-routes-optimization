@@ -31,7 +31,10 @@ def run_optimization():
     contador_convergencia = 0
     print("--- Iniciando Optimización ---")
     for gen in range(nmax):
-        # Evaluar la población
+        # Crear las poblaciones POPP Y P'
+
+        poblacion = ga.crear_poblacion_total(poblacion, tareas, drones, estaciones) #Acá es necesario pasar tareas, drones y estaciones porque para generar la poblacion debemos evaluar el fitness en el medio. Pero creo que todas las poblaciones se manejan con cromosomas del tipo [ci,cii]. Confirmame esto
+
         resultados = [sim.funcion_fitness(ind, tareas, drones, estaciones) for ind in poblacion]
         fitness_scores = [r[0] for r in resultados]
         energias = [r[1] for r in resultados]
@@ -67,7 +70,7 @@ def run_optimization():
 
         print(f"Generación {gen+1}/{nmax} - Mejor Fitness: {mejor_fitness_gen} - Mejor Energía: {energia_mejor:.2f}")
         if contador_convergencia >= nconv:
-            print(f"Convergencia alcanzada en la generación {gen+1}. Diferencia de energía: {mejora_energia:.4f} < {epsilon} por {contador_convergencia} generaciones.")
+            print(f"Convergencia alcanzada en la generación {gen+1}. Diferencia de energía: {mejora_energia:.4e} < {epsilon} por {contador_convergencia} generaciones.")
             break
 
     print("\n--- Optimización Finalizada ---")

@@ -1,14 +1,19 @@
 import random
+import config
 
-def tournament_selection(population, fitnesses, k=3):
+def tournament_selection(pop, fitnesses, k):
     """Selección por torneo"""
-    selected = random.sample(list(zip(population, fitnesses)), k)
-    selected.sort(key=lambda x: x[1])  # menor energía es mejor
-    return selected[0][0] ## Devuelve el individuo con mejor fitness
+    indices = [random.randint(0, len(pop) - 1) for _ in range(k)]  # lista con k índices aleatorios
+    candidatos = [pop[i] for i in indices]
+    fitness_candidatos = [fitnesses[i] for i in indices]
 
+    #Comparamos sus fitnesses
+    mejor_idx = fitness_candidatos.index(max(fitness_candidatos))
+    
+    return candidatos[mejor_idx]
 
-def elitism_selection(poblacion, fitness_scores):
+def buscar_n_mejores(poblacion, fitness_scores, N_BEST):
     """Selección de padres (elitismo simple)."""
+    N_MEJORES = min(N_BEST, len(poblacion))  # evita errores porque en caso de haber una población menor a N_BEST toma el menor de los dos
     sorted_population = [x for _, x in sorted(zip(fitness_scores, poblacion), key=lambda pair: pair[0], reverse=True)]
-    return sorted_population[:len(poblacion) // 2] # Devuelve la mitad superior de la población
-
+    return sorted_population[:N_MEJORES] # Devuelve los N_mejores fitness
