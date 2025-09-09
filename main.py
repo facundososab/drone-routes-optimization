@@ -55,7 +55,7 @@ def run_optimization():
         print("Mejor fitness generación:", mejor_fitness_gen)
         idx_mejor = fitness_normalizados.index(mejor_fitness_gen)
         energia_mejor = energias[idx_mejor]
-        mejora_energia = abs(energia_mejor - energia_mejor_anterior) if energia_mejor_anterior is not None else float('inf')
+        mejora_energia = abs(energia_mejor - energia_mejor_anterior) if energia_mejor_anterior is not None else config.PENALTY_VALUE
         #Cuando el fitness es 0, la energia es infinita --> Porque energia infinita penaliza.
 
         # Criterio de convergencia: comparar con la generación anterior

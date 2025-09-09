@@ -74,7 +74,7 @@ def funcion_objetivo(individuo, tareas, drones, estaciones_carga):
 
         for id_tarea in id_tareas_asignadas:
             tarea = tareas[id_tarea] # Obtenemos la tarea original
-            print ("Tarea:",tarea["id"])
+            #print ("Tarea:",tarea["id"])
             # --- 1. EVALUACIÓN PROACTIVA DE ENERGÍA PARA LA TAREA ACTUAL ---
             # ¿Cuánta energía necesito desde mi posición actual para completar esta tarea?
             L1 = distancia_metros(posicion_actual, tarea["pickup"])

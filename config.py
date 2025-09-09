@@ -25,7 +25,7 @@ NCONV = 100 # Número de generaciones sin mejora para considerar convergencia
 N_BEST = 5  # Cantidad de mejores individuos que se mantienen en cada generación de la población (P Unión POPP)
 # --- Factor de Penalización ---
 # Valor grande para penalizar soluciones inviables.
-PENALTY_VALUE = float("inf")
+PENALTY_VALUE = 1e12  # Valor grande para penalización, no infinito
 
 # --- PARÁMETROS DE LA SIMULACIÓN ---
 VELOCIDAD_DRON = 10  # m/s
