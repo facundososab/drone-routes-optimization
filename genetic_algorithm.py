@@ -25,16 +25,21 @@ def roulette_wheel_selection(pop, fitnesses):
     #El fitness más alto implica mejor solución (menor energía)
     total = sum(fitnesses)
     if total == 0:
-        # Evitar división por cero: seleccionar aleatorio uniforme
+
+        #Significa que no hubo ningún individuo válido en la población.
+        #QUÉ HACEMOS?  
+        # 1. CREAMOS UNA POBLACIÓN INICIAL NUEVAMENTE 
+        # 2. O DEVOLVEMOS LOS MISMO INDIVIDUOS INVIABLES.
+            # Hay que tener en cuenta que si devolvemos los inviables, luego naceran hijos de padres inviables y pasaran a la prox generación.
+            # Pero luego, en la porx generación, la POPP de esos individuos inviables serán fuertes.    
+        #ELIJO LA OPCION 2:
         return random.choice(pop)
 
-    # Normalización
-    probs = [f / total for f in fitnesses]
-
+    # Normalización --> eL FITNESS ya esta normalizado (la suma da 1)
     # Probabilidades acumuladas
     probs_acumuladas, acum = [], 0
-    for prob in probs:
-        acum += prob
+    for fit in fitnesses:
+        acum += fit
         probs_acumuladas.append(acum)
 
     for _ in range(len(pop)):
@@ -45,6 +50,22 @@ def roulette_wheel_selection(pop, fitnesses):
                 break
             #Sino, vuelve al ciclo y sigue buscando a quien le corresponde el número aleatorio
     return seleccionado
+
+
+
+def obtener_fitnesses(funcion_objetivo_values):
+    total = sum(funcion_objetivo_values)
+    if total == 0:
+        # Evitar división por cero
+        return [0] * len(funcion_objetivo_values) #Esto implicaria que ningun individuo de la poblacion fue valido
+
+    fitness_values = [f / total for f in funcion_objetivo_values]
+    
+    # Debugging
+    print("Sumatoria de fitness (debe dar 1):", sum(fitness_values))
+    
+    return fitness_values
+
 
 def generar_individuos_opuestos(P, num_tareas):
     """Genera la población opuesta POPP a partir de P usando Opposition-Based Learning."""
@@ -61,11 +82,12 @@ def crear_poblacion_total(poblacion_previa, tareas, drones, estaciones):
     """Crea la población total."""
     POPP= generar_individuos_opuestos(poblacion_previa, config.NUM_TAREAS)
 
-    fitnesses_candidatos = [
-            sim.funcion_fitness(ind, tareas, drones, estaciones)[0]  # me quedo solo con el fitness
+    funcion_objetivo_scores_candidatos = [
+            sim.funcion_objetivo(ind, tareas, drones, estaciones)[0]  # me quedo solo con el fitness
             for ind in (poblacion_previa + POPP)
         ]
-    
+    fitnesses_candidatos = obtener_fitnesses(funcion_objetivo_scores_candidatos)
+
     elite = selection.buscar_n_mejores((poblacion_previa + POPP), fitnesses_candidatos,config.N_BEST) #permitimos que los individuos de elite se dupliquen en la poblacion
 
     poblacion_total = elite.copy()
@@ -81,6 +103,11 @@ def crear_poblacion_inicial():
 
 def seleccion(poblacion, fitness_scores):
     """Selecciona padres usando selección por torneo y elitismo."""
+    if all(f == 0 for f in fitness_scores):
+        # Si todos los fitness son 0 --> Devuelve padres inviables al azar
+        return [random.choice(poblacion) for _ in range(config.TAMANO_POBLACION)]
+
+
     padres = []
     for _ in range(config.TAMANO_POBLACION):
         padre = selection.tournament_selection(poblacion, fitness_scores, k=(config.TAMANO_POBLACION // 5))
@@ -139,4 +166,3 @@ def mutacion(individuo):
         c_ii = mutation.cuts_mutation(c_ii, config.NUM_TAREAS)
         
     return [c_i, c_ii]
-

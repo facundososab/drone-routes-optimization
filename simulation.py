@@ -1,4 +1,4 @@
-# Contiene la lógica para simular una solución y calcular su fitness.
+# Contiene la lógica para simular una solución y calcular su funcion_objetivo.
 
 import numpy as np
 from points_generator import encontrar_estacion_mas_cercana, distancia_metros
@@ -50,9 +50,9 @@ def calcular_energia(L1, L2, L3, v, mpj):
 
     return energia_total
 
-def funcion_fitness(individuo, tareas, drones, estaciones_carga):
+def funcion_objetivo(individuo, tareas, drones, estaciones_carga):
     """
-    Función de fitness refactorizada con lógica de recarga proactiva y
+    Función objetivo refactorizada con lógica de recarga proactiva y
     verificación de tiempos de entrega.
     """
     # Las tareas son globales para todas las generaciones.
@@ -143,15 +143,20 @@ def funcion_fitness(individuo, tareas, drones, estaciones_carga):
         if tiempo_dron > makespan_flota:
             makespan_flota = tiempo_dron
 
-    # --- CÁLCULO FINAL DEL FITNESS ---
+    # --- CÁLCULO FINAL DE LA FUNCION OBJETIVO ---
     # Evitar divisiones por cero o valores no válidos.
     if energia_total_flota <= 0 or makespan_flota <= 0:
         energia_total_flota += config.PENALTY_VALUE
         makespan_flota += config.PENALTY_VALUE
 
     # El objetivo es minimizar la energía total y el tiempo máximo (makespan).
-    # Devolvemos el fitness y la energía total para criterios de convergencia.
+    # Devolvemos la funcion_objetivo y la energía total para criterios de convergencia.
     print("PASAMOS")
-    fitness = 1 / (energia_total_flota * makespan_flota)
-    #print(f"[fitness] energia={energia_total_flota:.2f}, fitness={fitness}")
-    return fitness, energia_total_flota
+
+    costo = (energia_total_flota * makespan_flota) #Si el individuo esta penalizado, costo = infinito
+    funcion_objetivo = 1 / (1 + costo) # Si esta penalizado, funcion_objetivo tiende a 0. Sino, es un número entre 0 y 1. 
+    #Mientras mayor sea la funcion objetivo, mejor el individuo
+    #print(f"[funcion_objetivo] energia={energia_total_flota:.2f}, funcion_objetivo={funcion_objetivo}")
+    return funcion_objetivo, energia_total_flota
+
+

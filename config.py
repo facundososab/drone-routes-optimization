@@ -16,16 +16,16 @@ CENTRO_ROSARIO = np.mean(POLIGONO_ROSARIO, axis=0).tolist()
 NUM_TAREAS = 5
 NUM_DRONES = 2
 NUM_ESTACIONES = 2
-TAMANO_POBLACION = 50 # cantidad de individuos (flotas) por generación
-PROBABILIDAD_MUTACION = 0.4
-PROBABILIDAD_CRUCE = 0.85
-EPSILON = 300 # Tolerancia de energía entre soluciones
+TAMANO_POBLACION = 100 # cantidad de individuos (flotas) por generación
+PROBABILIDAD_MUTACION = 0.1
+PROBABILIDAD_CRUCE = 0.75
+EPSILON = 300 # Tolerancia de energía entre soluciones Esto me parece que es un numero muy chico, deberi ser mas grande
 NUM_GENERACIONES = 1000
-NCONV = 200 # Número de generaciones sin mejora para considerar convergencia
+NCONV = 100 # Número de generaciones sin mejora para considerar convergencia
 N_BEST = 5  # Cantidad de mejores individuos que se mantienen en cada generación de la población (P Unión POPP)
 # --- Factor de Penalización ---
 # Valor grande para penalizar soluciones inviables.
-PENALTY_VALUE = 1e9
+PENALTY_VALUE = float("inf")
 
 # --- PARÁMETROS DE LA SIMULACIÓN ---
 VELOCIDAD_DRON = 10  # m/s

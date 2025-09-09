@@ -35,21 +35,28 @@ def run_optimization():
 
         poblacion = ga.crear_poblacion_total(poblacion, tareas, drones, estaciones) #Acá es necesario pasar tareas, drones y estaciones porque para generar la poblacion debemos evaluar el fitness en el medio. Pero creo que todas las poblaciones se manejan con cromosomas del tipo [ci,cii]. Confirmame esto
 
-        resultados = [sim.funcion_fitness(ind, tareas, drones, estaciones) for ind in poblacion]
-        fitness_scores = [r[0] for r in resultados]
-        energias = [r[1] for r in resultados]
+        resultados = [sim.funcion_objetivo(ind, tareas, drones, estaciones) for ind in poblacion] #resultado = [funcion_objetivo, energia_total]
         
+        funcion_objetivo_scores = [r[0] for r in resultados] # → acá tomamos el fitness crudo (1/(1+costo))
+        energias = [r[1] for r in resultados] # → acá tomamos la energía total
+        fitness_normalizados = ga.obtener_fitnesses(funcion_objetivo_scores) ## Fitness_normalizados es una lista que contiene todos los fitness de tal forma que su sumatoria de 1
+
+        if all(f == 0 for f in fitness_normalizados):
+            print("No hubo ningún individuo válido en la población.")
+            #Y EN ESTE CASO QUE HACEMOS? CREO QUE TENDRIAMOS QUE PASAR IGUALMENTE LA POBLACION. PORQUE LUEGO EN LA PROX GENERACION SE VA A GENERAR LA POPP Y ESA VA A SER BUENA (EL OPUESTO DEL DEBIL ES FUERTE)
+
         # Guardar datos para el gráfico
-        max_fitness_history.append(np.max(fitness_scores))
-        avg_fitness_history.append(np.mean(fitness_scores))
-        min_fitness_history.append(np.min(fitness_scores))
+        max_fitness_history.append(np.max(fitness_normalizados))
+        avg_fitness_history.append(np.mean(fitness_normalizados))
+        min_fitness_history.append(np.min(fitness_normalizados))
 
         # Encontrar y guardar la mejor solución
-        mejor_fitness_gen = max(fitness_scores)
+        mejor_fitness_gen = max(fitness_normalizados)
         print("Mejor fitness generación:", mejor_fitness_gen)
-        idx_mejor = fitness_scores.index(mejor_fitness_gen)
+        idx_mejor = fitness_normalizados.index(mejor_fitness_gen)
         energia_mejor = energias[idx_mejor]
         mejora_energia = abs(energia_mejor - energia_mejor_anterior) if energia_mejor_anterior is not None else float('inf')
+        #Cuando el fitness es 0, la energia es infinita --> Porque energia infinita penaliza.
 
         # Criterio de convergencia: comparar con la generación anterior
         if mejora_energia > epsilon:
@@ -62,8 +69,8 @@ def run_optimization():
         energia_mejor_anterior = energia_mejor
 
         # Evolucionar la población
-        padres = ga.seleccion(poblacion, fitness_scores)
-        descendencia = ga.cruce(padres)
+        padres = ga.seleccion(poblacion, fitness_normalizados) #Si los individuos fueron todos penalizados, fitness_normalizados = [0,0,0,...]
+        descendencia = ga.cruce(padres) #Si los padres eran inviables, capaz el cruce genere descendencia viable o también inviable
         if descendencia:
             poblacion = descendencia + padres[:len(poblacion) - len(descendencia)]
             poblacion = [ga.mutacion(ind) for ind in poblacion]

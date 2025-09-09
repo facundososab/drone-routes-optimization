@@ -12,6 +12,12 @@ def plot_fitness_evolution(max_fitness, avg_fitness, min_fitness, generations, f
         generations (int): Número total de generaciones.
         filename (str): Nombre del archivo para guardar el gráfico.
     """
+    print("\n📊 Valores de fitness por generación:")
+    print("Máximos:", max_fitness)
+    print("Promedios:", avg_fitness)
+    print("Mínimos:", min_fitness)
+
+
     generations_axis = list(range(1, generations + 1))
 
     plt.figure(figsize=(12, 6))
