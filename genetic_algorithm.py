@@ -62,6 +62,7 @@ def mutacion(individuo):
     # 1. Mutar Cromosoma I (Orden de Tareas)
     if random.random() < config.PROBABILIDAD_MUTACION:
         # Elige aleatoriamente entre swap o inversión para variar la estrategia
+        print("ocurre mutacion")
         if random.random() < 0.7: # 70% de probabilidad de hacer un swap simple
             c_i = mutation.swap_mutation(c_i)
         else: # 30% de probabilidad de hacer una inversión más disruptiva

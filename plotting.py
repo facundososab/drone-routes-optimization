@@ -19,6 +19,19 @@ def plot_fitness_evolution(max_fitness, avg_fitness, min_fitness, generations, f
     plt.plot(generations_axis, avg_fitness, label='Promedio Fitness', color='blue')
     plt.plot(generations_axis, min_fitness, label='Mínimo Fitness', color='green')
 
+    # Encontrar el valor máximo de fitness y su generación
+    max_value = max(max_fitness)
+    max_gen = generations_axis[max_fitness.index(max_value)]
+
+    # Agregar etiqueta en el gráfico
+    plt.annotate(
+        f'Max: {max_value:.2f}\nGen: {max_gen}',
+        xy=(max_gen, max_value),
+        xytext=(max_gen, max_value + (0.05 * max_value)),  # un poquito arriba
+        arrowprops=dict(facecolor='black', shrink=0.05),
+        ha='center'
+    )
+
     plt.xlabel('Generación')
     plt.ylabel('Fitness')
     plt.title(f'Evolución del Fitness a lo largo de {generations} generaciones')
