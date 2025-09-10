@@ -28,7 +28,7 @@ def run_optimization():
     # Parámetros de parada flexibles
     nmax = config.NUM_GENERACIONES
     epsilon = config.EPSILON
-    nconv = getattr(config, 'NCONV', 20)        # Si no existe, usa 20
+    nconv = getattr(config, 'NCONV', 20)        # Si no existe, usa 20                                                                                                          
     contador_convergencia = 0
     print("--- Iniciando Optimización ---")
     for gen in range(nmax):
@@ -43,8 +43,8 @@ def run_optimization():
 
         print(f"Fitnesses normalizados: {fitness_normalizados}")
         if all(f == 0 for f in fitness_normalizados):
-            print("No hubo ningún individuo válido en la población.")
-            #Y EN ESTE CASO QUE HACEMOS? CREO QUE TENDRIAMOS QUE PASAR IGUALMENTE LA POBLACION. PORQUE LUEGO EN LA PROX GENERACION SE VA A GENERAR LA POPP Y ESA VA A SER BUENA (EL OPUESTO DEL DEBIL ES FUERTE)
+            print("Todos los individuos tuvieron consumo de energia = 0 (IMPOSIBLE)")
+           
 
         # Guardar datos para el gráfico
         max_fitness_history.append(np.max(fitness_normalizados))

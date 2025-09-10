@@ -22,33 +22,31 @@ def crear_individuo():
 
 def roulette_wheel_selection(pop, fitnesses):
     """Selección por ruleta"""
-    #El fitness más alto implica mejor solución (menor energía)
-    total = sum(fitnesses)
+    #El fitness más bajo implica mejor solución (menor energía porque el fitness es directamente proporcional)
+    EPS = 1e-9  # para evitar división por cero
+    
+    # Transformar fitness en aptitudes (inverso)
+    aptitudes = [1.0 / (f + EPS) for f in fitnesses]
+    total = sum(aptitudes)
+    
     if total == 0:
-
-        #Significa que no hubo ningún individuo válido en la población.
-        #QUÉ HACEMOS?  
-        # 1. CREAMOS UNA POBLACIÓN INICIAL NUEVAMENTE 
-        # 2. O DEVOLVEMOS LOS MISMO INDIVIDUOS INVIABLES.
-            # Hay que tener en cuenta que si devolvemos los inviables, luego naceran hijos de padres inviables y pasaran a la prox generación.
-            # Pero luego, en la porx generación, la POPP de esos individuos inviables serán fuertes.    
-        #ELIJO LA OPCION 2:
+        # Caso extremo: todos los individuos tienen fitness infinito o inviables
         return random.choice(pop)
+    
+    # Normalizar aptitudes → probabilidades
+    probs = [a / total for a in aptitudes]
 
-    # Normalización --> eL FITNESS ya esta normalizado (la suma da 1)
-    # Probabilidades acumuladas
     probs_acumuladas, acum = [], 0
-    for fit in fitnesses:
-        acum += fit
+    for p in probs:
+        acum += p
         probs_acumuladas.append(acum)
 
-    for _ in range(len(pop)):
-        r = random.random()
-        for i in range(len(probs_acumuladas)):
-            if r <= probs_acumuladas[i]:
-                seleccionado = (pop[i])
-                break
-            #Sino, vuelve al ciclo y sigue buscando a quien le corresponde el número aleatorio
+    r = random.random()
+    for i in range(len(probs_acumuladas)):
+        if r <= probs_acumuladas[i]:
+            seleccionado = (pop[i])
+            break
+        #Sino, vuelve al ciclo y sigue buscando a quien le corresponde el número aleatorio
     return seleccionado
 
 
@@ -56,12 +54,15 @@ def roulette_wheel_selection(pop, fitnesses):
 def obtener_fitnesses(funcion_objetivo_values):
     # Para problemas de minimización: usar normalización directa
     total = sum(funcion_objetivo_values)
-    if total == 0:
-        # Evitar división por cero
-        return [0] * len(funcion_objetivo_values)
+    # Si total es 0, todos los individuos son optimos --> Un consumo de energia 0 no deberia pasar
+    # if total == 0:
+    #     # Evitar división por cero
+    #     return [0] * len(funcion_objetivo_values)
 
-    fitness_values = [f / total for f in funcion_objetivo_values]
-    
+    fitness_values = [(f / total) for f in funcion_objetivo_values]
+
+    #f son las energias --> (f/total) hay que minimizarlo --> fitness = (f/total) hay que minimizarlo
+
     # Debugging
     print("Sumatoria de fitness (debe dar 1):", sum(fitness_values))
     

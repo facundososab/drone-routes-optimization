@@ -16,11 +16,11 @@ CENTRO_ROSARIO = np.mean(POLIGONO_ROSARIO, axis=0).tolist()
 NUM_TAREAS = 5
 NUM_DRONES = 2
 NUM_ESTACIONES = 2
-TAMANO_POBLACION = 150 # cantidad de individuos (flotas) por generación
+TAMANO_POBLACION = 10 # cantidad de individuos (flotas) por generación
 PROBABILIDAD_MUTACION = 0.1
-PROBABILIDAD_CRUCE = 0.75
+PROBABILIDAD_CRUCE = 0.6
 EPSILON = 300 # Tolerancia de energía entre soluciones Esto me parece que es un numero muy chico, deberi ser mas grande
-NUM_GENERACIONES = 1000
+NUM_GENERACIONES = 100
 NCONV = 100 # Número de generaciones sin mejora para considerar convergencia
 N_BEST = 5  # Cantidad de mejores individuos que se mantienen en cada generación de la población (P Unión POPP)
 # --- Factor de Penalización ---

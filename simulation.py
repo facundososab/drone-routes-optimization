@@ -115,5 +115,5 @@ def funcion_objetivo(individuo, tareas, drones, estaciones_carga):
     # --- CÁLCULO FINAL DE LA FUNCION OBJETIVO ---
     if energia_total_flota <= 0:
         energia_total_flota += config.PENALTY_VALUE
-
+    print(f"La energia devuelta es: {energia_total_flota}")
     return energia_total_flota
