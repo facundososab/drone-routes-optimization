@@ -20,56 +20,11 @@ def crear_individuo():
     c_ii = puntos_de_corte
     return [c_i, c_ii]
 
-def roulette_wheel_selection(pop, fitnesses):
-    """Selección por ruleta"""
-    #El fitness más bajo implica mejor solución (menor energía porque el fitness es directamente proporcional)
-    EPS = 1e-9  # para evitar división por cero
-    
-    # Transformar fitness en aptitudes (inverso)
-    aptitudes = [1.0 / (f + EPS) for f in fitnesses]
-    total = sum(aptitudes)
-    
-    if total == 0:
-        # Caso extremo: todos los individuos tienen fitness infinito o inviables
-        return random.choice(pop)
-    
-    # Normalizar aptitudes → probabilidades
-    probs = [a / total for a in aptitudes]
-
-    probs_acumuladas, acum = [], 0
-    for p in probs:
-        acum += p
-        probs_acumuladas.append(acum)
-
-    r = random.random()
-    for i in range(len(probs_acumuladas)):
-        if r <= probs_acumuladas[i]:
-            seleccionado = (pop[i])
-            break
-        #Sino, vuelve al ciclo y sigue buscando a quien le corresponde el número aleatorio
-    return seleccionado
+def crear_poblacion_inicial():
+    return [crear_individuo() for _ in range(config.TAMANO_POBLACION)]
 
 
-
-def obtener_fitnesses(funcion_objetivo_values):
-    # Para problemas de minimización: usar normalización directa
-    total = sum(funcion_objetivo_values)
-    # Si total es 0, todos los individuos son optimos --> Un consumo de energia 0 no deberia pasar
-    # if total == 0:
-    #     # Evitar división por cero
-    #     return [0] * len(funcion_objetivo_values)
-
-    fitness_values = [(f / total) for f in funcion_objetivo_values]
-
-    #f son las energias --> (f/total) hay que minimizarlo --> fitness = (f/total) hay que minimizarlo
-
-    # Debugging
-    print("Sumatoria de fitness (debe dar 1):", sum(fitness_values))
-    
-    return fitness_values
-
-
-def generar_individuos_opuestos(P, num_tareas):
+def generar_poblacion_opuesta(P, num_tareas):
     """Genera la población opuesta POPP a partir de P usando Opposition-Based Learning."""
     POPP = []
     for (c_i, c_ii) in P:
@@ -80,27 +35,178 @@ def generar_individuos_opuestos(P, num_tareas):
 
 
 
-def crear_poblacion_total(poblacion_previa, tareas, drones, estaciones):
-    """Crea la población total."""
-    POPP= generar_individuos_opuestos(poblacion_previa, config.NUM_TAREAS)
+def procesar_generacion(poblacion_P, tareas, drones, estaciones):
+    """
+    Procesa una generación completa siguiendo la secuencia estándar:
+    1. Crear población opuesta (POPP)
+    2. Aplicar crossover y mutación a P y POPP
+    3. Evaluar fitness de P y POPP procesados
+    4. Crear población descendiente P' usando esos fitness
+    """
+    
+    # Paso 1: Crear población opuesta
+    POPP = generar_poblacion_opuesta(poblacion_P, config.NUM_TAREAS)
+    
+    # Paso 2: Aplicar crossover y mutación a P y POPP
+    print("Aplicando crossover y mutación a P...")
+    P_procesada = aplicar_operadores_geneticos(poblacion_P)
+    
+    print("Aplicando crossover y mutación a POPP...")
+    POPP_procesada = aplicar_operadores_geneticos(POPP)
 
-    funcion_objetivo_scores_candidatos = [
-            sim.funcion_objetivo(ind, tareas, drones, estaciones)  # ahora devuelve directamente la energía
-            for ind in (poblacion_previa + POPP)
-        ]
-    fitnesses_candidatos = obtener_fitnesses(funcion_objetivo_scores_candidatos)
+    
+    # Paso 3: Evaluar fitness de P y POPP procesados
+    poblacion_total_procesada = P_procesada + POPP_procesada
+    
+    energias_totales = []
+    for ind in poblacion_total_procesada:
+        print("Individuo a evaluar:", ind)
+        energias_totales.append(sim.funcion_objetivo(ind, tareas, drones, estaciones))
+        
+    # energias_totales = [sim.funcion_objetivo(ind, tareas, drones, estaciones) for ind in poblacion_total_procesada]
+    fitness_totales = obtener_fitnesses(energias_totales)
+    
+    # Encontrar el individuo con el mejor fitness
+    mejor_fitness = max(fitness_totales)
+    indice_mejor = fitness_totales.index(mejor_fitness)
+    mejor_individuo = poblacion_total_procesada[indice_mejor]
 
-    elite = selection.buscar_n_mejores((poblacion_previa + POPP), fitnesses_candidatos,config.N_BEST) #permitimos que los individuos de elite se dupliquen en la poblacion
+    print(f"El mejor individuo es: {mejor_individuo} con un fitness de: {mejor_fitness}")
+    
+    # Paso 4: Crear población descendiente P' usando los fitness calculados
+    P_prima = crear_poblacion_descendiente_con_fitness(
+        P_procesada, POPP_procesada, 
+        poblacion_total_procesada, fitness_totales
+    )
+    
+    return P_prima
 
-    poblacion_total = elite.copy()
-    while len(poblacion_total) < config.TAMANO_POBLACION:
-        individuo_restante = roulette_wheel_selection((poblacion_previa + POPP), fitnesses_candidatos)
-        poblacion_total.append(individuo_restante)
 
-    return poblacion_total
+def aplicar_operadores_geneticos(poblacion):
+    """
+    Aplica crossover y mutación a una población.
+    """
+    # Selección de padres para crossover
+    fitness_temp = [1.0 / len(poblacion)] * len(poblacion)  # Fitness uniforme temporal para selección
+    padres = seleccion(poblacion, fitness_temp)
+    
+    # Aplicar crossover
+    descendencia = cruce(padres)
+    
+    # Aplicar mutación
+    poblacion_procesada = [mutacion(ind) for ind in descendencia]
+    
+    return poblacion_procesada
 
-def crear_poblacion_inicial():
-    return [crear_individuo() for _ in range(config.TAMANO_POBLACION)]
+
+def crear_poblacion_descendiente_con_fitness(P_procesada, POPP_procesada, poblacion_total, fitness_totales):
+    """
+    Crea la población descendiente P' usando los fitness ya calculados:
+    1. Fusión: mitad de P, mitad de POPP
+    2. Inclusión de élite basada en fitness
+    3. Selección por ruleta del resto
+    4. Mantenimiento del tamaño
+    """
+    
+    # 1. Fusión: selección aleatoria de mitades
+    mitad_tamano = config.TAMANO_POBLACION // 2
+    
+    # Seleccionar aleatoriamente mitad de P procesada
+    if len(P_procesada) > 0:
+        indices_P = random.sample(range(len(P_procesada)), min(mitad_tamano, len(P_procesada)))
+        individuos_de_P = [P_procesada[i] for i in indices_P]
+    else:
+        individuos_de_P = []
+    
+    # Seleccionar aleatoriamente mitad de POPP procesada  
+    if len(POPP_procesada) > 0:
+        indices_POPP = random.sample(range(len(POPP_procesada)), min(mitad_tamano, len(POPP_procesada)))
+        individuos_de_POPP = [POPP_procesada[i] for i in indices_POPP]
+    else:
+        individuos_de_POPP = []
+    
+    # Población descendiente inicial
+    poblacion_descendiente = individuos_de_P + individuos_de_POPP
+    
+    # 2. Inclusión de individuos élite de la población total
+    elite = selection.buscar_n_mejores(poblacion_total, fitness_totales, config.N_BEST)
+    
+    # Agregar élite que no esté ya en la descendencia
+    for individuo_elite in elite:
+        if individuo_elite not in poblacion_descendiente:
+            poblacion_descendiente.append(individuo_elite)
+    
+    # 3. Selección por ruleta para completar hasta TAMANO_POBLACION
+    while len(poblacion_descendiente) < config.TAMANO_POBLACION:
+        individuo_ruleta = roulette_wheel_selection(poblacion_total, fitness_totales)
+        poblacion_descendiente.append(individuo_ruleta)
+    
+    # 4. Truncar si excede el tamaño
+    if len(poblacion_descendiente) > config.TAMANO_POBLACION:
+        poblacion_descendiente = poblacion_descendiente[:config.TAMANO_POBLACION]
+    
+    return poblacion_descendiente
+
+
+def roulette_wheel_selection(pop, fitnesses):
+    """Selección por ruleta"""
+    # Ahora los fitness ya están correctos: mayor fitness = mejor individuo
+    
+    if not pop or not fitnesses:
+        return random.choice(pop) if pop else None
+    
+    total = sum(fitnesses)
+    if total == 0:
+        # Caso extremo: todos los individuos tienen fitness 0
+        return random.choice(pop)
+    
+    # Los fitness ya están normalizados, así que son directamente probabilidades
+    probs = fitnesses  # Ya normalizados en obtener_fitnesses
+    
+    # Crear probabilidades acumuladas
+    probs_acumuladas, acum = [], 0
+    for p in probs:
+        acum += p
+        probs_acumuladas.append(acum)
+
+    r = random.random()
+    seleccionado = pop[-1]  # Por defecto, seleccionar el último individuo
+    
+    for i in range(len(probs_acumuladas)):
+        if r <= probs_acumuladas[i]:
+            seleccionado = pop[i]
+            break
+    
+    return seleccionado
+
+
+
+def obtener_fitnesses(funcion_objetivo_values):
+    """
+    Calcula fitness normalizados para problema de minimización.
+    Menor energía → Mayor fitness (mejor individuo)
+    """
+    EPS = 1e-9  # Para evitar división por cero
+    
+    # Transformar energías a fitness usando inverso
+    # Menor energía → Mayor fitness
+    fitness_values = [1.0 / (f + EPS) for f in funcion_objetivo_values]
+    
+    # Normalizar para que sumen 1
+    total = sum(fitness_values)
+    if total > 0:
+        fitness_values = [f / total for f in fitness_values]
+    else:
+        # Caso extremo: todos fitness infinitos, asignar igual probabilidad
+        fitness_values = [1.0 / len(funcion_objetivo_values)] * len(funcion_objetivo_values)
+    
+    # Debugging
+    print("Sumatoria de fitness (debe dar 1):", sum(fitness_values))
+    print(f"Energías: min={min(funcion_objetivo_values):.2f}, max={max(funcion_objetivo_values):.2f}")
+    print(f"Fitness: min={min(fitness_values):.6f}, max={max(fitness_values):.6f}")
+    
+    return fitness_values
+
 
 
 def seleccion(poblacion, fitness_scores):

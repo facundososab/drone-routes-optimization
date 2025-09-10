@@ -8,6 +8,7 @@ def generar_tareas(num_tareas, poligono):
     """Genera la lista de tareas."""
     pickups = generar_puntos_aleatorios(num_tareas, poligono)
     dropoffs = generar_puntos_aleatorios(num_tareas, poligono)
+    print("pickups:", pickups)
     return [{
         "id": i,
         "pickup": pickups[i],

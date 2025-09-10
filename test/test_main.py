@@ -1,17 +1,43 @@
+import sys
+import os
+
+# Agregar el directorio padre al path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import config
 import problem_setup as ps
 import genetic_algorithm as ga
 import simulation as sim
-import visualization as vis
 import numpy as np
 from plotting import plot_fitness_evolution
+import visualization as vis
+import random
+from config import TIEMPO_MIN_MIN, TIEMPO_MAX_MIN
+
+def generar_tareas(num_tareas, poligono):
+    """Genera la lista de tareas."""
+    pickups = [[-32.95725661118796, -60.664089752558695], [-32.957177017243424, -60.66344776867995], [-32.96272183853973, -60.66912792002945], [-32.95402077807787, -60.636839227537216], [-32.93771002752342, -60.67211530315638]]
+    dropoffs = [[-32.96257969995565, -60.67041521218382], [-32.939790781520344, -60.67356570157502], [-32.92648716696396, -60.67168846440852], [-32.959862113511015, -60.63135871248699], [-32.944088634078604, -60.67536088272771]]
+    return [{
+        "id": i,
+        "pickup": pickups[i],
+        "dropoff": dropoffs[i],
+        "peso": 1, # en kilos
+        "tiempo_max": random.randint(TIEMPO_MIN_MIN * 60, TIEMPO_MAX_MIN * 60),  # en segundos
+        "recarga_previa": None,
+    } for i in range(num_tareas)]
+    
+def generar_drones(num_drones, poligono):
+    """Genera la lista de drones con sus bases."""
+    posiciones = [[-32.9545, -60.6355], [-32.9556, -60.6340]]
+    return [{"id": i, "posicion_inicial": posiciones[i]} for i in range(num_drones)]
 
 def run_optimization():
     """Función principal que orquesta la optimización."""
     # 1. Generar los datos del problema
-    tareas = ps.generar_tareas(config.NUM_TAREAS, config.POLIGONO_ROSARIO)
-    drones = ps.generar_drones(config.NUM_DRONES, config.POLIGONO_ROSARIO)
-    estaciones = ps.generar_estaciones_carga(config.NUM_ESTACIONES, config.POLIGONO_ROSARIO)
+    tareas = generar_tareas(5, config.POLIGONO_ROSARIO)
+    drones = ps.generar_drones(2, config.POLIGONO_ROSARIO)
+    estaciones = [[-32.9545, -60.6355], [-32.9556, -60.6340]]
 
     # 2. Iniciar el algoritmo genético
     poblacion = ga.crear_poblacion_inicial() #Contiene: [[ci,cii], [ci,cii], ...]
