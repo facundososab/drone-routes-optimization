@@ -18,6 +18,7 @@ def run_optimization():
     mejor_solucion_global = None
     mejor_energia_global = -1
     energia_mejor_anterior = None
+    mejor_generacion = 0  # Agregamos esta variable para rastrear la generación
 
     # Listas para guardar el historial del fitness
     max_fitness_history = []
@@ -33,14 +34,14 @@ def run_optimization():
     for gen in range(nmax):
         # Crear las poblaciones POPP Y P'
 
-        poblacion = ga.crear_poblacion_total(poblacion, tareas, drones, estaciones) #Acá es necesario pasar tareas, drones y estaciones porque para generar la poblacion debemos evaluar el fitness en el medio. Pero creo que todas las poblaciones se manejan con cromosomas del tipo [ci,cii]. Confirmame esto
+        poblacion = ga.crear_poblacion_total(poblacion, tareas, drones, estaciones)
 
-        resultados = [sim.funcion_objetivo(ind, tareas, drones, estaciones) for ind in poblacion] #resultado = [funcion_objetivo, energia_total]
+        resultados = [sim.funcion_objetivo(ind, tareas, drones, estaciones) for ind in poblacion] # ahora resultado = energia_total_flota
         
-        funcion_objetivo_scores = [r[0] for r in resultados] # → acá tomamos el fitness crudo (1/(1+costo))
-        energias = [r[1] for r in resultados] # → acá tomamos la energía total
-        fitness_normalizados = ga.obtener_fitnesses(funcion_objetivo_scores) ## Fitness_normalizados es una lista que contiene todos los fitness de tal forma que su sumatoria de 1
+        energias = resultados  # Ahora las energías son directamente los resultados
+        fitness_normalizados = ga.obtener_fitnesses(energias) ## Fitness normalizados basados en energía (a minimizar)
 
+        print(f"Fitnesses normalizados: {fitness_normalizados}")
         if all(f == 0 for f in fitness_normalizados):
             print("No hubo ningún individuo válido en la población.")
             #Y EN ESTE CASO QUE HACEMOS? CREO QUE TENDRIAMOS QUE PASAR IGUALMENTE LA POBLACION. PORQUE LUEGO EN LA PROX GENERACION SE VA A GENERAR LA POPP Y ESA VA A SER BUENA (EL OPUESTO DEL DEBIL ES FUERTE)
@@ -50,17 +51,18 @@ def run_optimization():
         avg_fitness_history.append(np.mean(fitness_normalizados))
         min_fitness_history.append(np.min(fitness_normalizados))
 
-        # Encontrar y guardar la mejor solución
-        mejor_fitness_gen = max(fitness_normalizados)
-        print("Mejor fitness generación:", mejor_fitness_gen)
-        idx_mejor = fitness_normalizados.index(mejor_fitness_gen)
+        # Encontrar y guardar la mejor solución (menor energía)
+        idx_mejor = energias.index(min(energias))  # El mejor es el de menor energía
         energia_mejor = energias[idx_mejor]
+        mejor_fitness_gen = fitness_normalizados[idx_mejor]
+        print("Mejor energía generación:", energia_mejor)
         mejora_energia = abs(energia_mejor - energia_mejor_anterior) if energia_mejor_anterior is not None else config.PENALTY_VALUE
         #Cuando el fitness es 0, la energia es infinita --> Porque energia infinita penaliza.
 
         # Criterio de convergencia: comparar con la generación anterior
         if mejora_energia > epsilon:
             mejor_energia_global = energia_mejor
+            mejor_generacion = gen + 1  # Guardamos la generación (1-indexada)
             print (f"Generación {gen+1}: Nueva mejor energía encontrada: {mejor_energia_global:.2f} (Fitness: {mejor_fitness_gen:.6f})")
             mejor_solucion_global = poblacion[idx_mejor]
             contador_convergencia = 0
@@ -82,18 +84,21 @@ def run_optimization():
 
     print("\n--- Optimización Finalizada ---")
     
+    
     # Generar y guardar el gráfico de evolución
     if max_fitness_history:
         plot_fitness_evolution(
             max_fitness_history,
             avg_fitness_history,
             min_fitness_history,
-            len(max_fitness_history)
+            len(max_fitness_history),
+            mejor_generacion  # Pasamos la generación de la mejor solución
         )
 
     # 3. Mostrar resultados
     if mejor_solucion_global:
-        print(f"Mejor solución encontrada.")
+        print(f"🏆 Mejor solución encontrada en la Generación {mejor_generacion}")
+        print(f"   Energía: {mejor_energia_global:.2f} J")
 
         # Decodificar rutas de la mejor solución
         rutas_mejor = sim.decodificar_cromosoma(mejor_solucion_global, tareas, drones)

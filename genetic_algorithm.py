@@ -54,10 +54,11 @@ def roulette_wheel_selection(pop, fitnesses):
 
 
 def obtener_fitnesses(funcion_objetivo_values):
+    # Para problemas de minimización: usar normalización directa
     total = sum(funcion_objetivo_values)
     if total == 0:
         # Evitar división por cero
-        return [0] * len(funcion_objetivo_values) #Esto implicaria que ningun individuo de la poblacion fue valido
+        return [0] * len(funcion_objetivo_values)
 
     fitness_values = [f / total for f in funcion_objetivo_values]
     
@@ -83,7 +84,7 @@ def crear_poblacion_total(poblacion_previa, tareas, drones, estaciones):
     POPP= generar_individuos_opuestos(poblacion_previa, config.NUM_TAREAS)
 
     funcion_objetivo_scores_candidatos = [
-            sim.funcion_objetivo(ind, tareas, drones, estaciones)[0]  # me quedo solo con el fitness
+            sim.funcion_objetivo(ind, tareas, drones, estaciones)  # ahora devuelve directamente la energía
             for ind in (poblacion_previa + POPP)
         ]
     fitnesses_candidatos = obtener_fitnesses(funcion_objetivo_scores_candidatos)

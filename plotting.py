@@ -1,7 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 
-def plot_fitness_evolution(max_fitness, avg_fitness, min_fitness, generations, filename="evolucion_fitness.png"):
+def plot_fitness_evolution(max_fitness, avg_fitness, min_fitness, generations, mejor_generacion=None, filename="evolucion_fitness.png"):
     """
     Genera una gráfica de la evolución del fitness y la guarda en la carpeta 'resultados'.
 
@@ -31,12 +31,18 @@ def plot_fitness_evolution(max_fitness, avg_fitness, min_fitness, generations, f
 
     # Agregar etiqueta en el gráfico
     plt.annotate(
-        f'Max: {max_value:.2f}\nGen: {max_gen}',
+        f'Max: {max_value:.4f}\nGen: {max_gen}',
         xy=(max_gen, max_value),
         xytext=(max_gen, max_value + (0.05 * max_value)),  # un poquito arriba
         arrowprops=dict(facecolor='black', shrink=0.05),
         ha='center'
     )
+
+    # Si tenemos la información de la mejor solución global, la marcamos
+    if mejor_generacion is not None and mejor_generacion <= len(max_fitness):
+        plt.axvline(x=mejor_generacion, color='red', linestyle='--', alpha=0.7, linewidth=2)
+        plt.text(mejor_generacion, max(max_fitness) * 0.8, f'Mejor\nSolución\nGen {mejor_generacion}', 
+                ha='center', va='center', bbox=dict(boxstyle="round,pad=0.3", facecolor='yellow', alpha=0.7))
 
     plt.xlabel('Generación')
     plt.ylabel('Fitness')
