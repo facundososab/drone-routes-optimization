@@ -18,9 +18,9 @@ NUM_DRONES = 2
 NUM_ESTACIONES = 2
 TAMANO_POBLACION = 10 # cantidad de individuos (flotas) por generación
 PROBABILIDAD_MUTACION = 0.1
-PROBABILIDAD_CRUCE = 0.3
+PROBABILIDAD_CRUCE = 0.5
 EPSILON = 2000 # Tolerancia de energía entre soluciones Esto me parece que es un numero muy chico, deberi ser mas grande
-NUM_GENERACIONES = 10
+NUM_GENERACIONES = 100
 NCONV = 100 # Número de generaciones sin mejora para considerar convergencia
 N_BEST = 10  # Cantidad de mejores individuos que se mantienen en cada generación de la población (P Unión POPP)
 # --- Factor de Penalización ---

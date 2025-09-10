@@ -23,21 +23,21 @@ def generar_tareas(num_tareas, poligono):
         "pickup": pickups[i],
         "dropoff": dropoffs[i],
         "peso": 1, # en kilos
-        "tiempo_max": random.randint(TIEMPO_MIN_MIN * 60, TIEMPO_MAX_MIN * 60),  # en segundos
+        "tiempo_max": 3600*60*10,  # en segundos
         "recarga_previa": None,
     } for i in range(num_tareas)]
     
 def generar_drones(num_drones, poligono):
     """Genera la lista de drones con sus bases."""
-    posiciones = [[-32.9545, -60.6355], [-32.9556, -60.6340]]
+    posiciones = [[-32.9543, -60.675], [-32.9456, -60.6440]]
     return [{"id": i, "posicion_inicial": posiciones[i]} for i in range(num_drones)]
 
 def run_optimization():
     """Función principal que orquesta la optimización."""
     # 1. Generar los datos del problema
     tareas = generar_tareas(5, config.POLIGONO_ROSARIO)
-    drones = ps.generar_drones(2, config.POLIGONO_ROSARIO)
-    estaciones = [[-32.9545, -60.6355], [-32.9556, -60.6340]]
+    drones = generar_drones(2, config.POLIGONO_ROSARIO)
+    estaciones = [[-32.936780, -60.6455], [-32.955500, -60.649813]]
 
     # 2. Iniciar el algoritmo genético
     poblacion = ga.crear_poblacion_inicial() #Contiene: [[ci,cii], [ci,cii], ...]
@@ -104,13 +104,13 @@ def run_optimization():
     
     # Generar y guardar el gráfico de evolución
     if max_fitness_history:
-        plot_fitness_evolution(
+      plot_fitness_evolution(
             max_fitness_history,
             avg_fitness_history,
             min_fitness_history,
             len(max_fitness_history),
             mejor_generacion  # Pasamos la generación de la mejor solución
-        )
+      )
 
     # 3. Mostrar resultados
     if mejor_solucion_global:
@@ -118,7 +118,7 @@ def run_optimization():
         print(f"   Energía: {mejor_energia_global:.2f} J")
 
         # Decodificar rutas de la mejor solución
-        rutas_mejor = sim.decodificar_cromosoma(mejor_solucion_global, tareas, drones)
+        rutas_mejor = sim.decodificar_cromosoma(mejor_solucion_global, drones)
 
         for id_dron, id_tareas_asignadas in rutas_mejor.items():
             print(f"\n--- Recorrido del Dron {id_dron} ---")

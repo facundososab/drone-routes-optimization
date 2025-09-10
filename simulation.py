@@ -5,7 +5,7 @@ from points_generator import encontrar_estacion_mas_cercana, distancia_metros
 import config
 import copy
 
-def decodificar_cromosoma(individuo, tareas, drones):
+def decodificar_cromosoma(individuo, drones):
     """Traduce un cromosoma a una lista de IDs de tareas para cada dron."""
     c_i, c_ii = individuo
     rutas_drones = {dron["id"]: [] for dron in drones}
@@ -43,7 +43,7 @@ def funcion_objetivo(individuo, tareas, drones, estaciones_carga):
     print("Evaluando individuo:", individuo)
     tareas_locales = copy.deepcopy(tareas)
         
-    rutas = decodificar_cromosoma(individuo, tareas_locales, drones)
+    rutas = decodificar_cromosoma(individuo, drones)
     energia_total_flota = 0
     
     penalizacion = False
