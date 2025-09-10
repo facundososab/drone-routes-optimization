@@ -11,7 +11,7 @@ def run_optimization():
     # 1. Generar los datos del problema
     tareas = ps.generar_tareas(config.NUM_TAREAS, config.POLIGONO_ROSARIO)
     drones = ps.generar_drones(config.NUM_DRONES, config.POLIGONO_ROSARIO)
-    estaciones = ps.generar_estaciones_carga(config.NUM_ESTACIONES, config.POLIGONO_ROSARIO)
+    estaciones = config.ESTACIONES_DE_CARGA[:config.NUM_ESTACIONES]  # Usar las estaciones predefinidas en config.py
 
     # 2. Iniciar el algoritmo genético
     poblacion = ga.crear_poblacion_inicial() #Contiene: [[ci,cii], [ci,cii], ...]
