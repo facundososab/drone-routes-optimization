@@ -31,7 +31,7 @@ def calcular_energia(L1, L2, L3, v, mpj):
     numerador3 = (L1 + L3) * np.sqrt((config.MASA_DRON * config.G)**3)
     term3 = numerador3 / sustentacion_const
     energia_total = (1 / config.EFICIENCIA_GLOBAL) * (term1 + term2 + term3)
-    return energia_total
+    return energia_total / 1e6
 
 def funcion_objetivo(individuo, tareas, drones, estaciones_carga):
     """

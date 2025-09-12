@@ -3,6 +3,7 @@ import config
 
 def tournament_selection(pop, fitnesses, k):
     """Selección por torneo"""
+    k = max(2, k)
     indices = [random.randint(0, len(pop) - 1) for _ in range(k)]  # lista con k índices aleatorios
     candidatos = [pop[i] for i in indices]
     fitness_candidatos = [fitnesses[i] for i in indices]

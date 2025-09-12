@@ -73,23 +73,15 @@ def procesar_generacion(poblacion_P, tareas, drones, estaciones):
     energias_filtradas = [
         energia for idx, energia in enumerate(energias_totales) if idx not in indices_inviables
     ]
+    #Hay que asegurarse que poblacion_total_filtrada tenga al menos TAMANO_POBLACION individuos
         
-    # energias_totales = [sim.funcion_objetivo(ind, tareas, drones, estaciones) for ind in poblacion_total_procesada]
-    fitness_filtrados = obtener_fitnesses(energias_filtradas)
-    
-    # Encontrar el individuo con el mejor fitness
-    mejor_fitness = max(fitness_filtrados)
-    indice_mejor = fitness_filtrados.index(mejor_fitness)
-    mejor_individuo = poblacion_total_filtrada[indice_mejor]
+    fitness_filtrados = obtener_fitnesses_local(energias_filtradas)
 
-    print(f"El mejor individuo es: {mejor_individuo} con un fitness de: {mejor_fitness}")
-    
-    # Paso 4: Crear población descendiente P' usando los fitness calculados
     P_prima = crear_poblacion_descendiente_con_fitness(
         poblacion_total_filtrada, fitness_filtrados
     )
     
-    return P_prima
+    return P_prima #P_prima contiene todos individuos viables solamente. Pero podria pasar que contenga menos de TAMANO_POBLACION individuos.
 
 
 def aplicar_operadores_geneticos(poblacion):
@@ -120,19 +112,23 @@ def crear_poblacion_descendiente_con_fitness(poblacion_filtrada, fitness_totales
 
     # 2. Inclusión de individuos élite de la población total
     elite = selection.buscar_n_mejores(poblacion_filtrada, fitness_totales, config.N_BEST)
-    
     poblacion_descendiente = elite.copy()
     # 3. Selección por ruleta para completar hasta TAMANO_POBLACION
-    while len(poblacion_descendiente) < config.TAMANO_POBLACION:
+    max_intentos = 10 * config.TAMANO_POBLACION
+    intentos = 0
+
+    while len(poblacion_descendiente) < config.TAMANO_POBLACION and intentos < max_intentos:
         individuo_ruleta = roulette_wheel_selection(poblacion_filtrada, fitness_totales)
         if individuo_ruleta not in poblacion_descendiente:
             poblacion_descendiente.append(individuo_ruleta)
+        else:
+            intentos += 1
     
-    # 4. Truncar si excede el tamaño
-    if len(poblacion_descendiente) > config.TAMANO_POBLACION:
-        poblacion_descendiente = poblacion_descendiente[:config.TAMANO_POBLACION]
+    while len(poblacion_descendiente) < config.TAMANO_POBLACION: #Permitimos que los de elite se repitan
+            individuo_ruleta = roulette_wheel_selection(poblacion_filtrada, fitness_totales)
+            poblacion_descendiente.append(individuo_ruleta)
     
-    return poblacion_descendiente
+    return poblacion_descendiente[:config.TAMANO_POBLACION]
 
 
 def roulette_wheel_selection(pop, fitnesses):
@@ -148,7 +144,7 @@ def roulette_wheel_selection(pop, fitnesses):
         return random.choice(pop)
     
     # Los fitness ya están normalizados, así que son directamente probabilidades
-    probs = fitnesses  # Ya normalizados en obtener_fitnesses
+    probs = fitnesses  # Ya normalizados en obtener_fitnesses_local
     
     # Crear probabilidades acumuladas
     probs_acumuladas, acum = [], 0
@@ -168,7 +164,7 @@ def roulette_wheel_selection(pop, fitnesses):
 
 
 
-def obtener_fitnesses(funcion_objetivo_values):
+def obtener_fitnesses_local(funcion_objetivo_values):
     """
     Calcula fitness normalizados para problema de minimización.
     Menor energía → Mayor fitness (mejor individuo)
@@ -193,6 +189,15 @@ def obtener_fitnesses(funcion_objetivo_values):
     print(f"Fitness: min={min(fitness_values):.6f}, max={max(fitness_values):.6f}")
     
     return fitness_values
+
+def obtener_fitnesses_global(energias, energia_menor_global=None, energia_mayor_global=None):
+
+    rango = energia_mayor_global - energia_menor_global
+ 
+    fitnesses_globales = [1 - ((e - energia_menor_global)/(rango)) for e in energias]
+    #Acá no hace falta que la sumatoria de fitnesses_gloables de = 1 porque no los voy a usar para una selección por probabilidades
+    return fitnesses_globales
+
 
 
 

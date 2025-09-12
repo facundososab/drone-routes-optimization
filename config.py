@@ -1,5 +1,6 @@
 # Almacena todos los parámetros y constantes del proyecto.
 import numpy as np
+import math
 
 # --- PARÁMETROS GEOGRÁFICOS ---
 POLIGONO_ROSARIO = [ #(lat,lon)
@@ -13,18 +14,15 @@ POLIGONO_ROSARIO = [ #(lat,lon)
 CENTRO_ROSARIO = np.mean(POLIGONO_ROSARIO, axis=0).tolist()
 
 # --- PARÁMETROS DEL ALGORITMO GENÉTICO ---
-NUM_TAREAS = 5
-NUM_DRONES = 2
-NUM_ESTACIONES = 5
-TAMANO_POBLACION = 20 # cantidad de individuos (flotas) por generación
-PROBABILIDAD_MUTACION = 0.1
-PROBABILIDAD_CRUCE = 0.5
-EPSILON = 2000 # Tolerancia de energía entre soluciones Esto me parece que es un numero muy chico, deberi ser mas grande
-NUM_GENERACIONES = 200
-NCONV = 20 # Número de generaciones sin mejora para considerar convergencia
-N_BEST = 10  # Cantidad de mejores individuos que se mantienen en cada generación de la población (P Unión POPP)
-# --- Factor de Penalización ---
-PENALTY_VALUE = 1e18  # Valor grande para penalizar soluciones inviables.
+NUM_TAREAS = 35
+NUM_DRONES = 10
+NUM_ESTACIONES = 10
+TAMANO_POBLACION = 50 # cantidad de individuos (flotas) por generación
+PROBABILIDAD_MUTACION = 0.05
+PROBABILIDAD_CRUCE = 0.8
+NUM_GENERACIONES = 1000
+N_BEST = math.floor((1/2)*TAMANO_POBLACION)  # Cantidad de mejores individuos que se mantienen en cada generación de la población (P Unión POPP).
+K_TORNEO = math.floor((3/4)*TAMANO_POBLACION) # Número de individuos en cada torneo (mínimo 2)
 
 # --- PARÁMETROS DE LA SIMULACIÓN ---
 VELOCIDAD_DRON = 10  # m/s
@@ -33,7 +31,7 @@ TIEMPO_MIN_MIN = 20  # minutos
 TIEMPO_MAX_MIN = 75  # minutos
 
 # --- PARÁMETROS FÍSICOS DEL DRON Multirotor (DJI Matrice 300 RTK con 2 baterías TB60) ---
-BATERIA_MAXIMA = 2 * (274 * 3600) #[Joules] --> 2 (baterias) * (Wh de cada bateria * 3600 s para conversión de Wh a Joules) 
+BATERIA_MAXIMA = (2 * (274 * 3600)) / 1e6 #[MJoules] --> 2 (baterias) * (Wh de cada bateria * 3600 s para conversión de Wh a Joules) 
 MASA_DRON = 6.3 # [Kg] mi, masa del dron
 PAYLOAD_MAX = 2.7 # [Kg] mp, carga máxima del paquete del dron
 RHO = 1.225  # rho, densidad del aire en kg/m^3 al nivel del mar

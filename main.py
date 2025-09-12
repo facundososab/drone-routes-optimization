@@ -15,11 +15,14 @@ def run_optimization():
 
     # 2. Iniciar el algoritmo genético
     poblacion = ga.crear_poblacion_inicial() #Contiene: [[ci,cii], [ci,cii], ...]
-    mejor_solucion_global = None
-    mejor_energia_global = float("inf")
-    #energia_mejor_anterior = None
+    mejor_individuo_global = None
     mejor_generacion = 0  # Rastrear la mejor generación
-
+    
+    #Para normalización global del fitness
+    energia_menor_global = 0 #El limite mínimo de un individuo viable es > 0
+    energia_mayor_global = 5 # El limite máximo es arbitrario. Se supone que en MJ no consumiran mas de 5MJ
+    mejor_energia_global = float('inf') #Para almacenar la mejor energia global de los individuos
+    
     # Listas para guardar el historial del fitness
     max_fitness_history = []
     avg_fitness_history = []
@@ -29,30 +32,39 @@ def run_optimization():
     avg_energias_history = []
     min_energias_history = []
 
-    # Parámetros de parada flexibles
     nmax = config.NUM_GENERACIONES
-    epsilon = config.EPSILON
-    nconv = getattr(config, 'NCONV', 20) # Si no existe, usa 20                                                                                                          
-    contador_convergencia = 0
+
     print("--- Iniciando Optimización ---")
     for gen in range(nmax):
         # Procesar generación completa: POPP → crossover/mutación → fitness → P'
         poblacion = ga.procesar_generacion(poblacion, tareas, drones, estaciones)
+        #Acá los individuos que llegan son todos viables
+        #Acá las funciones fitness implementadas deben ser locales --> Los individuos compiten por ser seleccionados ante sus propios compañeros, no ante los globales.
 
         # Calcular energías y fitness de la nueva población para estadísticas
         energias = [sim.funcion_objetivo(ind, tareas, drones, estaciones) for ind in poblacion]
-        fitness_normalizados = ga.obtener_fitnesses(energias)
+        print(f"Energías de la población: {[f'{e:.2f}' for e in energias[:5]]} ...")
+        #Las energias se suponen que son viables
+        if any(e <= 0 for e in energias):
+            print("Error: Se encontró una energía no positiva en la población que se pasará a la siguiente iteración (IMPOSIBLE)")
 
-        print(f"Fitnesses normalizados: {[f'{f:.6f}' for f in fitness_normalizados[:5]]}")
-        if all(f == 0 for f in fitness_normalizados):
+        energia_mayor_global = max(energia_mayor_global, max(energias))  # Actualizar el mayor global
+        print("SE ACTUALIZO energia_mayor_global:", energia_mayor_global)
+        energia_menor_global = min(energia_menor_global, min(energias))  # Actualizar el menor global
+        print("SE ACTUALIZO energia_menor_global:", energia_menor_global)
+        
+        fitness_globales = ga.obtener_fitnesses_global(energias, energia_menor_global, energia_mayor_global)
+
+        print(f"Fitnesses normalizados: {[f'{f:.6f}' for f in fitness_globales[:5]]}")
+        if all(f == 0 for f in fitness_globales):
             print("Todos los individuos tuvieron consumo de energia = 0 (IMPOSIBLE)")
            
 
         # Guardar datos para el gráfico
-        max_fitness_history.append(np.max(fitness_normalizados))
+        max_fitness_history.append(np.max(fitness_globales))
         print(f"Generación {gen+1}: Max Fitness = {max_fitness_history[-1]:.6f}")
-        avg_fitness_history.append(np.mean(fitness_normalizados))
-        min_fitness_history.append(np.min(fitness_normalizados))
+        avg_fitness_history.append(np.mean(fitness_globales))
+        min_fitness_history.append(np.min(fitness_globales))
 
         max_energias_history.append(np.max(energias))
         avg_energias_history.append(np.mean(energias))
@@ -64,14 +76,12 @@ def run_optimization():
         energia_mejor = energias[idx_mejor]
         #print("Mejor energía generación:", energia_mejor)
 
-        if energia_mejor < mejor_energia_global:  
+        if energia_mejor <= mejor_energia_global:  
             mejor_energia_global = energia_mejor
-            mejor_solucion_global = poblacion[idx_mejor]
-            mejor_generacion = gen + 1 #La mejor generacion es la de menor energia, pero esta a veces no coincide con la de mayor fitness
-        
+            mejor_individuo_global = poblacion[idx_mejor]
+            mejor_generacion = gen + 1 
 
     print("\n--- Optimización Finalizada ---")
-    
     
     # Generar y guardar los gráficos de evolución para distintas métricas
     if max_fitness_history:
@@ -92,12 +102,12 @@ def run_optimization():
         )
 
     # 3. Mostrar resultados
-    if mejor_solucion_global:
+    if mejor_individuo_global:
         print(f"🏆 Mejor solución encontrada en la Generación {mejor_generacion}")
-        print(f"   Energía: {mejor_energia_global:.2f} J")
+        print(f"   Energía: {mejor_energia_global:.2e} J")
 
         # Decodificar rutas de la mejor solución
-        rutas_mejor = sim.decodificar_cromosoma(mejor_solucion_global, drones)
+        rutas_mejor = sim.decodificar_cromosoma(mejor_individuo_global, drones)
 
         for id_dron, id_tareas_asignadas in rutas_mejor.items():
             print(f"\n--- Recorrido del Dron {id_dron} ---")
@@ -121,7 +131,7 @@ def run_optimization():
             print(f"\n  *** Dron {id_dron} termina en {posicion_actual} ***")
 
         # Visualización en el mapa
-        vis.visualizar_rutas(mejor_solucion_global, tareas, drones, config.POLIGONO_ROSARIO, estaciones, config)
+        vis.visualizar_rutas(mejor_individuo_global, tareas, drones, config.POLIGONO_ROSARIO, estaciones, config)
     else:
         print("❌ No se encontró una solución válida.")
 
