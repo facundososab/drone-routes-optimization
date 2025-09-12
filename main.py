@@ -4,7 +4,7 @@ import genetic_algorithm as ga
 import simulation as sim
 import visualization as vis
 import numpy as np
-from plotting import plot_fitness_evolution
+from plotting import plot_fitness_evolution, plot_energia_evolution
 
 def run_optimization():
     """Función principal que orquesta la optimización."""
@@ -16,14 +16,18 @@ def run_optimization():
     # 2. Iniciar el algoritmo genético
     poblacion = ga.crear_poblacion_inicial() #Contiene: [[ci,cii], [ci,cii], ...]
     mejor_solucion_global = None
-    mejor_energia_global = -1
-    energia_mejor_anterior = None
+    mejor_energia_global = float("inf")
+    #energia_mejor_anterior = None
     mejor_generacion = 0  # Rastrear la mejor generación
 
     # Listas para guardar el historial del fitness
     max_fitness_history = []
     avg_fitness_history = []
     min_fitness_history = []
+
+    max_energias_history = []
+    avg_energias_history = []
+    min_energias_history = []
 
     # Parámetros de parada flexibles
     nmax = config.NUM_GENERACIONES
@@ -46,44 +50,45 @@ def run_optimization():
 
         # Guardar datos para el gráfico
         max_fitness_history.append(np.max(fitness_normalizados))
+        print(f"Generación {gen+1}: Max Fitness = {max_fitness_history[-1]:.6f}")
         avg_fitness_history.append(np.mean(fitness_normalizados))
         min_fitness_history.append(np.min(fitness_normalizados))
+
+        max_energias_history.append(np.max(energias))
+        avg_energias_history.append(np.mean(energias))
+        min_energias_history.append(np.min(energias))
+        print(f"Generación {gen+1}: Min Energía = {min_energias_history[-1]:.2f}")
 
         # Encontrar y guardar la mejor solución (menor energía)
         idx_mejor = energias.index(min(energias))  # El mejor es el de MENOR energía
         energia_mejor = energias[idx_mejor]
-        mejor_fitness_gen = fitness_normalizados[idx_mejor]
-        print("Mejor energía generación:", energia_mejor)
-        mejora_energia = abs(energia_mejor - energia_mejor_anterior) if energia_mejor_anterior is not None else config.PENALTY_VALUE
-        #Cuando el fitness es 0, la energia es infinita --> Porque energia infinita penaliza.
+        #print("Mejor energía generación:", energia_mejor)
 
-        # Criterio de convergencia: comparar con la generación anterior
-        if mejora_energia > epsilon:
+        if energia_mejor < mejor_energia_global:  
             mejor_energia_global = energia_mejor
-            mejor_generacion = gen + 1  # Guardamos la generación (1-indexada)
-            print (f"Generación {gen+1}: Nueva mejor energía encontrada: {mejor_energia_global:.2f} (Fitness: {mejor_fitness_gen:.6f})")
             mejor_solucion_global = poblacion[idx_mejor]
-            contador_convergencia = 0
-        else:
-            contador_convergencia += 1
-        energia_mejor_anterior = energia_mejor
-
-        print(f"Generación {gen+1}/{nmax} - Mejor Fitness: {mejor_fitness_gen} - Mejor Energía: {energia_mejor:.2f}")
-        if contador_convergencia >= nconv:
-            print(f"Convergencia alcanzada en la generación {gen+1}. Diferencia de energía: {mejora_energia:.4e} < {epsilon} por {contador_convergencia} generaciones.")
-            break
+            mejor_generacion = gen + 1 #La mejor generacion es la de menor energia, pero esta a veces no coincide con la de mayor fitness
+        
 
     print("\n--- Optimización Finalizada ---")
     
     
-    # Generar y guardar el gráfico de evolución
+    # Generar y guardar los gráficos de evolución para distintas métricas
     if max_fitness_history:
         plot_fitness_evolution(
             max_fitness_history,
             avg_fitness_history,
             min_fitness_history,
             len(max_fitness_history),
-            mejor_generacion  # Pasamos la generación de la mejor solución
+            mejor_generacion
+        )
+    if max_energias_history:
+        plot_energia_evolution(
+            max_energias_history,
+            avg_energias_history,
+            min_energias_history,
+            len(min_energias_history),
+            mejor_generacion
         )
 
     # 3. Mostrar resultados
@@ -92,7 +97,7 @@ def run_optimization():
         print(f"   Energía: {mejor_energia_global:.2f} J")
 
         # Decodificar rutas de la mejor solución
-        rutas_mejor = sim.decodificar_cromosoma(mejor_solucion_global, tareas, drones)
+        rutas_mejor = sim.decodificar_cromosoma(mejor_solucion_global, drones)
 
         for id_dron, id_tareas_asignadas in rutas_mejor.items():
             print(f"\n--- Recorrido del Dron {id_dron} ---")
@@ -100,9 +105,9 @@ def run_optimization():
             print(f"  Sale desde la base en {posicion_actual}")
 
             for id_tarea in id_tareas_asignadas:
-                tarea = tareas[id_tarea] # Se obtiene la tarea original
+                tarea = tareas[id_tarea]  # Se obtiene la tarea original
                 print(f"\n  -> Iniciando Tarea {tarea['id']}:")
-                
+
                 if tarea.get("recarga_previa") is not None:
                     print(f"     1) Va a estación de recarga previa en {tarea['recarga_previa']}")
                     posicion_actual = tarea["recarga_previa"]
@@ -115,10 +120,10 @@ def run_optimization():
 
             print(f"\n  *** Dron {id_dron} termina en {posicion_actual} ***")
 
-    # Visualización en el mapa
+        # Visualización en el mapa
         vis.visualizar_rutas(mejor_solucion_global, tareas, drones, config.POLIGONO_ROSARIO, estaciones, config)
     else:
-        print("No se encontró una solución válida.")
+        print("❌ No se encontró una solución válida.")
 
 if __name__ == "__main__":
     run_optimization()

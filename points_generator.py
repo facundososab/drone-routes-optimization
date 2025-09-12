@@ -89,7 +89,7 @@ def generar_puntos_equiespaciados(num_estaciones, poligono, radio, k=30): #radio
                     break
         if not found: #Ningun vecino fue valido
             activos.pop(idx)
-            print("Se descarta el punto")
+            #print("Se descarta el punto")
 
     return puntos
 

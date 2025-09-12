@@ -11,7 +11,7 @@ def generar_tareas(num_tareas, poligono):
     """Genera la lista de tareas."""
     pickups = generar_puntos_aleatorios(num_tareas, poligono)
     dropoffs = generar_puntos_aleatorios(num_tareas, poligono)
-    print("pickups:", pickups)
+    #print("pickups:", pickups)
     return [{
         "id": i,
         "pickup": pickups[i],
@@ -41,7 +41,7 @@ def generar_estaciones_carga(num_estaciones, poligono):
     lugares = ox.features_from_polygon(polygon, tags)
 
     if lugares.empty:
-        print("No se encontraron estaciones de servicio en este polígono.")
+        #print("No se encontraron estaciones de servicio en este polígono.")
         return []
 
     # Tomar centroides o puntos

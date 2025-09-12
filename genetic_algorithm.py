@@ -62,21 +62,31 @@ def procesar_generacion(poblacion_P, tareas, drones, estaciones):
     for ind in poblacion_total_procesada:
         print("Individuo a evaluar:", ind)
         energias_totales.append(sim.funcion_objetivo(ind, tareas, drones, estaciones))
+
+    # 2. Detectar índices inviables (energía = 0)
+    indices_inviables = [idx for idx, energia in enumerate(energias_totales) if energia == 0]
+
+    # 3. Filtrar población y energías
+    poblacion_total_filtrada = [
+        ind for idx, ind in enumerate(poblacion_total_procesada) if idx not in indices_inviables
+    ]
+    energias_filtradas = [
+        energia for idx, energia in enumerate(energias_totales) if idx not in indices_inviables
+    ]
         
     # energias_totales = [sim.funcion_objetivo(ind, tareas, drones, estaciones) for ind in poblacion_total_procesada]
-    fitness_totales = obtener_fitnesses(energias_totales)
+    fitness_filtrados = obtener_fitnesses(energias_filtradas)
     
     # Encontrar el individuo con el mejor fitness
-    mejor_fitness = max(fitness_totales)
-    indice_mejor = fitness_totales.index(mejor_fitness)
-    mejor_individuo = poblacion_total_procesada[indice_mejor]
+    mejor_fitness = max(fitness_filtrados)
+    indice_mejor = fitness_filtrados.index(mejor_fitness)
+    mejor_individuo = poblacion_total_filtrada[indice_mejor]
 
     print(f"El mejor individuo es: {mejor_individuo} con un fitness de: {mejor_fitness}")
     
     # Paso 4: Crear población descendiente P' usando los fitness calculados
     P_prima = crear_poblacion_descendiente_con_fitness(
-        P_procesada, POPP_procesada, 
-        poblacion_total_procesada, fitness_totales
+        poblacion_total_filtrada, fitness_filtrados
     )
     
     return P_prima
@@ -99,47 +109,24 @@ def aplicar_operadores_geneticos(poblacion):
     return poblacion_procesada
 
 
-def crear_poblacion_descendiente_con_fitness(P_procesada, POPP_procesada, poblacion_total, fitness_totales):
+def crear_poblacion_descendiente_con_fitness(poblacion_filtrada, fitness_totales):
     """
     Crea la población descendiente P' usando los fitness ya calculados:
-    1. Fusión: mitad de P, mitad de POPP
-    2. Inclusión de élite basada en fitness
+    1. Fusión: mitad de P, mitad de POPP --> Este es el elitismo. Se seleccionan los N_BEST de cada población
+    PERO AHORA LA POBLACIÓN FILTRADA QUE LLEGA YA NO SABEMOS CUANTOS CONTIENE DE CADA POBLACIÓN, YO DIGO QUE TOMEMOS LOS N_BEST DE LA POBLACIÓN FILTRADA
     3. Selección por ruleta del resto
     4. Mantenimiento del tamaño
     """
-    
-    # 1. Fusión: selección aleatoria de mitades
-    mitad_tamano = config.TAMANO_POBLACION // 2
-    
-    # Seleccionar aleatoriamente mitad de P procesada
-    if len(P_procesada) > 0:
-        indices_P = random.sample(range(len(P_procesada)), min(mitad_tamano, len(P_procesada)))
-        individuos_de_P = [P_procesada[i] for i in indices_P]
-    else:
-        individuos_de_P = []
-    
-    # Seleccionar aleatoriamente mitad de POPP procesada  
-    if len(POPP_procesada) > 0:
-        indices_POPP = random.sample(range(len(POPP_procesada)), min(mitad_tamano, len(POPP_procesada)))
-        individuos_de_POPP = [POPP_procesada[i] for i in indices_POPP]
-    else:
-        individuos_de_POPP = []
-    
-    # Población descendiente inicial
-    poblacion_descendiente = individuos_de_P + individuos_de_POPP
-    
+
     # 2. Inclusión de individuos élite de la población total
-    elite = selection.buscar_n_mejores(poblacion_total, fitness_totales, config.N_BEST)
+    elite = selection.buscar_n_mejores(poblacion_filtrada, fitness_totales, config.N_BEST)
     
-    # Agregar élite que no esté ya en la descendencia
-    for individuo_elite in elite:
-        if individuo_elite not in poblacion_descendiente:
-            poblacion_descendiente.append(individuo_elite)
-    
+    poblacion_descendiente = elite.copy()
     # 3. Selección por ruleta para completar hasta TAMANO_POBLACION
     while len(poblacion_descendiente) < config.TAMANO_POBLACION:
-        individuo_ruleta = roulette_wheel_selection(poblacion_total, fitness_totales)
-        poblacion_descendiente.append(individuo_ruleta)
+        individuo_ruleta = roulette_wheel_selection(poblacion_filtrada, fitness_totales)
+        if individuo_ruleta not in poblacion_descendiente:
+            poblacion_descendiente.append(individuo_ruleta)
     
     # 4. Truncar si excede el tamaño
     if len(poblacion_descendiente) > config.TAMANO_POBLACION:

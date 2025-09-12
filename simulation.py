@@ -40,7 +40,7 @@ def funcion_objetivo(individuo, tareas, drones, estaciones_carga):
     """
     # --- CORRECCIÓN CRÍTICA: Evitar la modificación del estado global ---
     # Se trabaja con una copia profunda para no "contaminar" los datos para el siguiente individuo.\
-    print("Evaluando individuo:", individuo)
+    #print("Evaluando individuo:", individuo)
     tareas_locales = copy.deepcopy(tareas)
         
     rutas = decodificar_cromosoma(individuo, drones)
@@ -66,13 +66,13 @@ def funcion_objetivo(individuo, tareas, drones, estaciones_carga):
 
             # --- 2. DECISIÓN DE RECARGA ---
             if bateria_actual < energia_requerida_inicial:
-                print(f"Tarea: {tarea['id']} Batería insuficiente, buscando estación... Necesito: {energia_requerida_inicial:.2f}, Tengo: {bateria_actual:.2f}")
+                #print(f"Tarea: {tarea['id']} Batería insuficiente, buscando estación... Necesito: {energia_requerida_inicial:.2f}, Tengo: {bateria_actual:.2f}")
                 estacion_cercana = encontrar_estacion_mas_cercana(posicion_actual, estaciones_carga)
                 dist_a_estacion = distancia_metros(posicion_actual, estacion_cercana)
                 energia_a_estacion = calcular_energia(dist_a_estacion, 0, 0, config.VELOCIDAD_DRON, 0)
                 
                 if bateria_actual < energia_a_estacion:
-                    print(f"PENALIZACIÓN (Dron {id_dron}): No hay batería para llegar a la estación. Falta: {energia_a_estacion - bateria_actual:.2f} J")
+                    #print(f"PENALIZACIÓN (Dron {id_dron}): No hay batería para llegar a la estación. Falta: {energia_a_estacion - bateria_actual:.2f} J")
                     penalizacion = True
                     continue
 
@@ -91,7 +91,7 @@ def funcion_objetivo(individuo, tareas, drones, estaciones_carga):
             energia_viaje_tarea = calcular_energia(L1, L2, 0, config.VELOCIDAD_DRON, tarea["peso"])
 
             if bateria_actual < energia_viaje_tarea:
-                print(f"PENALIZACIÓN (Dron {id_dron}): Tarea imposible incluso con batería llena. Requiere: {energia_viaje_tarea:.2f} J")
+                #print(f"PENALIZACIÓN (Dron {id_dron}): Tarea imposible incluso con batería llena. Requiere: {energia_viaje_tarea:.2f} J")
                 penalizacion = True
                 continue
 
@@ -103,7 +103,7 @@ def funcion_objetivo(individuo, tareas, drones, estaciones_carga):
 
             # --- 4. VERIFICACIÓN DEL TIEMPO LÍMITE (DEADLINE) ---
             if tiempo_dron > tarea["tiempo_max"]:
-                print(f"PENALIZACIÓN (Dron {id_dron}): Plazo de entrega excedido. Tiempo: {tiempo_dron:.2f}s, Límite: {tarea['tiempo_max']}s, en la tarea {tarea['id']}")
+                #print(f"PENALIZACIÓN (Dron {id_dron}): Plazo de entrega excedido. Tiempo: {tiempo_dron:.2f}s, Límite: {tarea['tiempo_max']}s, en la tarea {tarea['id']}")
                 penalizacion = True
             
             # --- 5. VERIFICACIÓN DE SEGURIDAD ---
@@ -115,11 +115,11 @@ def funcion_objetivo(individuo, tareas, drones, estaciones_carga):
                 penalizacion = True
                 continue
             
-        print("La bateria que consumió el dron", id_dron, "fue de:", config.BATERIA_MAXIMA - bateria_actual)
+        #print("La bateria que consumió el dron", id_dron, "fue de:", config.BATERIA_MAXIMA - bateria_actual)
 
     # --- CÁLCULO FINAL DE LA FUNCION OBJETIVO ---
     if penalizacion:
-        energia_total_flota += config.PENALTY_VALUE
+        energia_total_flota = 0
         print("Se aplicó penalización por incumplimientos.")
     print(f"La energia devuelta es: {energia_total_flota}")
-    return energia_total_flota
+    return (energia_total_flota / 1e6) #MegaJoules
