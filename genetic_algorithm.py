@@ -70,6 +70,20 @@ def procesar_generacion(poblacion_P, tareas, drones, estaciones):
     poblacion_total_filtrada = [
         ind for idx, ind in enumerate(poblacion_total_procesada) if idx not in indices_inviables
     ]
+
+    while len(poblacion_total_filtrada) == 0:
+        print("Advertencia: Todos los individuos son inviables. Regenerando población...")
+        poblacion_nueva = [crear_individuo() for _ in range(config.TAMANO_POBLACION)]
+        poblacion_nueva_procesada = aplicar_operadores_geneticos(poblacion_nueva)
+        poblacion_POPP_nueva = generar_poblacion_opuesta(poblacion_nueva, config.NUM_TAREAS)
+        poblacion_POPP_nueva_procesada = aplicar_operadores_geneticos(poblacion_POPP_nueva)
+        poblacion_total_nueva = poblacion_nueva + poblacion_POPP_nueva
+        energias_totales = [sim.funcion_objetivo(ind, tareas, drones, estaciones) for ind in poblacion_total_nueva]
+        indices_inviables = [idx for idx, energia in enumerate(energias_totales) if energia == 0]
+        poblacion_total_filtrada = [
+            ind for idx, ind in enumerate(poblacion_total_filtrada) if idx not in indices_inviables
+        ]
+
     energias_filtradas = [
         energia for idx, energia in enumerate(energias_totales) if idx not in indices_inviables
     ]
@@ -180,7 +194,7 @@ def obtener_fitnesses_local(funcion_objetivo_values):
     if total > 0:
         fitness_values = [f / total for f in fitness_values]
     else:
-        # Caso extremo: todos fitness infinitos, asignar igual probabilidad
+        # Caso extremo: todos fitness infinitos --> todas las energias penalizadas
         fitness_values = [1.0 / len(funcion_objetivo_values)] * len(funcion_objetivo_values)
     
     # Debugging

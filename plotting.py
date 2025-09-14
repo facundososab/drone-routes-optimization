@@ -21,9 +21,7 @@ def plot_fitness_evolution(max_fitness, avg_fitness, min_fitness, generations, m
     generations_axis = list(range(1, generations + 1))
 
     plt.figure(figsize=(12, 6))
-    plt.plot(generations_axis, max_fitness, label='Máximo Fitness', color='orange')
-    plt.plot(generations_axis, avg_fitness, label='Promedio Fitness', color='blue')
-    plt.plot(generations_axis, min_fitness, label='Mínimo Fitness', color='green')
+    plt.plot(generations_axis, max_fitness, label='Máximo Fitness', color='black')
 
     # Encontrar el valor máximo de fitness y su generación
     max_value = max(max_fitness)
@@ -77,9 +75,8 @@ def plot_energia_evolution(max_energy, avg_energy, min_energy, generations, mejo
     generations_axis = list(range(1, generations + 1))
 
     plt.figure(figsize=(12, 6))
-    plt.plot(generations_axis, max_energy, label='Máxima Energía', color='red')
-    plt.plot(generations_axis, avg_energy, label='Promedio Energía', color='blue')
-    plt.plot(generations_axis, min_energy, label='Mínima Energía', color='green')
+    
+    plt.plot(generations_axis, min_energy, label='Mínima Energía', color='black')
 
     # Encontrar el valor mínimo de energía y su generación
     min_value = min(min_energy)
@@ -87,7 +84,7 @@ def plot_energia_evolution(max_energy, avg_energy, min_energy, generations, mejo
 
     # Agregar etiqueta en el gráfico
     plt.annotate(
-        f'Min: {min_value:.2f}\nGen: {min_gen}',
+        f'Min: {min_value:.2e}\nGen: {min_gen}',
         xy=(min_gen, min_value),
         xytext=(min_gen, min_value * 1.05),  # un poquito arriba
         arrowprops=dict(facecolor='black', shrink=0.05),
@@ -96,7 +93,7 @@ def plot_energia_evolution(max_energy, avg_energy, min_energy, generations, mejo
 
     # Si tenemos la información de la mejor solución global, la marcamos
     if mejor_generacion is not None and mejor_generacion <= len(min_energy):
-        plt.axvline(x=mejor_generacion, color='purple', linestyle='--', alpha=0.7, linewidth=2)
+        plt.axvline(x=mejor_generacion, color='red', linestyle='--', alpha=0.7, linewidth=2)
         plt.text(
             mejor_generacion,
             max(max_energy) * 0.8,

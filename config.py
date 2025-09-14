@@ -14,14 +14,14 @@ POLIGONO_ROSARIO = [ #(lat,lon)
 CENTRO_ROSARIO = np.mean(POLIGONO_ROSARIO, axis=0).tolist()
 
 # --- PARÁMETROS DEL ALGORITMO GENÉTICO ---
-NUM_TAREAS = 35
-NUM_DRONES = 10
+NUM_TAREAS = 60
+NUM_DRONES = 15
 NUM_ESTACIONES = 10
 TAMANO_POBLACION = 50 # cantidad de individuos (flotas) por generación
 PROBABILIDAD_MUTACION = 0.05
-PROBABILIDAD_CRUCE = 0.8
+PROBABILIDAD_CRUCE = 0.4
 NUM_GENERACIONES = 1000
-N_BEST = math.floor((1/2)*TAMANO_POBLACION)  # Cantidad de mejores individuos que se mantienen en cada generación de la población (P Unión POPP).
+N_BEST = math.floor((0.5)*TAMANO_POBLACION)  # Cantidad de mejores individuos que se mantienen en cada generación de la población (P Unión POPP).
 K_TORNEO = math.floor((3/4)*TAMANO_POBLACION) # Número de individuos en cada torneo (mínimo 2)
 
 # --- PARÁMETROS DE LA SIMULACIÓN ---
