@@ -6,4 +6,5 @@ __pycache__/
 *.pyo
 *.pyd
 resultados/
+test/
 rutas_drones_final.html
