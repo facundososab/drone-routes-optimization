@@ -24,7 +24,7 @@ def plot_fitness_evolution(max_fitness, avg_fitness, min_fitness, generations, m
     plt.plot(generations_axis, max_fitness, label='Máximo Fitness', color='black')
 
     # Encontrar el valor máximo de fitness y su generación
-    max_value = max(max_fitness)
+    max_value = max(max_fitness) # MegaJoules
     max_gen = generations_axis[max_fitness.index(max_value)]
 
     # Agregar etiqueta en el gráfico
@@ -79,7 +79,7 @@ def plot_energia_evolution(max_energy, avg_energy, min_energy, generations, mejo
     plt.plot(generations_axis, min_energy, label='Mínima Energía', color='black')
 
     # Encontrar el valor mínimo de energía y su generación
-    min_value = min(min_energy)
+    min_value = min(min_energy) # MegaJoules
     min_gen = generations_axis[min_energy.index(min_value)]
 
     # Agregar etiqueta en el gráfico

@@ -48,10 +48,10 @@ def procesar_generacion(poblacion_P, tareas, drones, estaciones):
     POPP = generar_poblacion_opuesta(poblacion_P, config.NUM_TAREAS)
     
     # Paso 2: Aplicar crossover y mutación a P y POPP
-    print("Aplicando crossover y mutación a P...")
+    #print("Aplicando crossover y mutación a P...")
     P_procesada = aplicar_operadores_geneticos(poblacion_P)
-    
-    print("Aplicando crossover y mutación a POPP...")
+
+    #print("Aplicando crossover y mutación a POPP...")
     POPP_procesada = aplicar_operadores_geneticos(POPP)
 
     
@@ -60,8 +60,8 @@ def procesar_generacion(poblacion_P, tareas, drones, estaciones):
     
     energias_totales = []
     for ind in poblacion_total_procesada:
-        print("Individuo a evaluar:", ind)
-        energias_totales.append(sim.funcion_objetivo(ind, tareas, drones, estaciones))
+        #print("Individuo a evaluar:", ind)
+        energias_totales.append((sim.funcion_objetivo(ind, tareas, drones, estaciones))[0])
 
     # 2. Detectar índices inviables (energía = 0)
     indices_inviables = [idx for idx, energia in enumerate(energias_totales) if energia == 0]
@@ -71,19 +71,28 @@ def procesar_generacion(poblacion_P, tareas, drones, estaciones):
         ind for idx, ind in enumerate(poblacion_total_procesada) if idx not in indices_inviables
     ]
 
-    while len(poblacion_total_filtrada) == 0:
+    contador = 0
+    parametros_inviables = False
+    while len(poblacion_total_filtrada) == 0 and contador < 10:
         print("Advertencia: Todos los individuos son inviables. Regenerando población...")
         poblacion_nueva = [crear_individuo() for _ in range(config.TAMANO_POBLACION)]
         poblacion_nueva_procesada = aplicar_operadores_geneticos(poblacion_nueva)
         poblacion_POPP_nueva = generar_poblacion_opuesta(poblacion_nueva, config.NUM_TAREAS)
         poblacion_POPP_nueva_procesada = aplicar_operadores_geneticos(poblacion_POPP_nueva)
-        poblacion_total_nueva = poblacion_nueva + poblacion_POPP_nueva
-        energias_totales = [sim.funcion_objetivo(ind, tareas, drones, estaciones) for ind in poblacion_total_nueva]
+        poblacion_total_nueva = poblacion_nueva_procesada + poblacion_POPP_nueva_procesada
+        energias_totales = [(sim.funcion_objetivo(ind, tareas, drones, estaciones))[0] for ind in poblacion_total_nueva]
         indices_inviables = [idx for idx, energia in enumerate(energias_totales) if energia == 0]
         poblacion_total_filtrada = [
             ind for idx, ind in enumerate(poblacion_total_filtrada) if idx not in indices_inviables
         ]
+        contador += 1
 
+    if contador == 10:
+        parametros_inviables = True
+        print("Se alcanzó el límite de regeneraciones. PARÁMETROS MUY RESTRICTIVOS. Intente agregando drones o quitando tareas")
+        #Si son pocos drones --> Aumentar bateria
+        #Si la bateria es suficiente, pero son muchas tareas --> Aumentar tiempos de entrega
+    
     energias_filtradas = [
         energia for idx, energia in enumerate(energias_totales) if idx not in indices_inviables
     ]
@@ -95,7 +104,7 @@ def procesar_generacion(poblacion_P, tareas, drones, estaciones):
         poblacion_total_filtrada, fitness_filtrados
     )
     
-    return P_prima #P_prima contiene todos individuos viables solamente. Pero podria pasar que contenga menos de TAMANO_POBLACION individuos.
+    return P_prima, parametros_inviables #P_prima contiene todos individuos viables solamente. Pero podria pasar que contenga menos de TAMANO_POBLACION individuos.
 
 
 def aplicar_operadores_geneticos(poblacion):
@@ -199,8 +208,8 @@ def obtener_fitnesses_local(funcion_objetivo_values):
     
     # Debugging
     print("Sumatoria de fitness (debe dar 1):", sum(fitness_values))
-    print(f"Energías: min={min(funcion_objetivo_values):.2f}, max={max(funcion_objetivo_values):.2f}")
-    print(f"Fitness: min={min(fitness_values):.6f}, max={max(fitness_values):.6f}")
+    #print(f"Energías: min={min(funcion_objetivo_values):.2f}, max={max(funcion_objetivo_values):.2f}")
+    #print(f"Fitness: min={min(fitness_values):.6f}, max={max(fitness_values):.6f}")
     
     return fitness_values
 
@@ -268,7 +277,7 @@ def mutacion(individuo):
     # 1. Mutar Cromosoma I (Orden de Tareas)
     if random.random() < config.PROBABILIDAD_MUTACION:
         # Elige aleatoriamente entre swap o inversión para variar la estrategia
-        print("ocurre mutacion")
+        #print("ocurre mutacion")
         if random.random() < 0.7: # 70% de probabilidad de hacer un swap simple
             c_i = mutation.swap_mutation(c_i)
         else: # 30% de probabilidad de hacer una inversión más disruptiva
