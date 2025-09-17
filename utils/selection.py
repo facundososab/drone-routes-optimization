@@ -1,5 +1,4 @@
 import random
-import config
 
 def tournament_selection(pop, fitnesses, k):
     """Selección por torneo"""

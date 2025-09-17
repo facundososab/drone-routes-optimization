@@ -225,7 +225,7 @@ def obtener_fitnesses_global(energias, energia_menor_global=None, energia_mayor_
 
 
 def seleccion(poblacion, fitness_scores):
-    """Selecciona padres usando selección por torneo y elitismo."""
+    """Selecciona padres usando selección por torneo """
     if all(f == 0 for f in fitness_scores):
         # Si todos los fitness son 0 --> Devuelve padres inviables al azar
         return [random.choice(poblacion) for _ in range(config.TAMANO_POBLACION)]
@@ -236,10 +236,6 @@ def seleccion(poblacion, fitness_scores):
         padre = selection.tournament_selection(poblacion, fitness_scores, k=(config.TAMANO_POBLACION // 5))
         padres.append(padre)
     
-    #VER ESTE CASO
-    # if config.TAMANO_POBLACION % 2 == 1: # Si es impar, seleccionamos un padre extra
-    #     padre_extra = selection.tournament_selection(poblacion, fitness_scores, k=(config.TAMANO_POBLACION // 5))
-    #     padres.append(padre_extra)
 
     return padres
 

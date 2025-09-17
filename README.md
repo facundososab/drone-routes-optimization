@@ -12,7 +12,7 @@ El proyecto está organizado en los siguientes módulos principales:
 
 ### **1. [`genetic_algorithm.py`](genetic_algorithm.py)**
 
-Contiene la implementación del algoritmo genético, incluyendo:
+Contiene la implementación de los operadores genéticos principales, incluyendo:
 
 - **Inicialización de la población**: Generación de soluciones iniciales aleatorias.
 - **Selección**: Métodos como ruleta, torneo y elitismo.
@@ -33,7 +33,7 @@ Simula la ejecución de las rutas asignadas a los drones y calcula la función o
 
 Centraliza los parámetros configurables del proyecto, como:
 
-- **Características de los drones**: Velocidad, capacidad de batería, masa.
+- **Características y especificaciones de los drones**: Velocidad, capacidad de batería, masa, etc.
 - **Configuración del algoritmo genético**: Tamaño de la población, probabilidades de crossover y mutación.
 - **Entorno de simulación**: Número de tareas, estaciones de carga, límites de tiempo.
 
@@ -82,23 +82,24 @@ Contiene scripts y datos para pruebas:
 ## **Cómo Ejecutar el Proyecto**
 
 1. **Generar datos de prueba**:
-   Ejecuta el script para generar puntos de pickup, dropoff y estaciones de carga:
+   Ejecuta el script para generar estaciones de carga (desde la raíz del proyecto):
 
    ```bash
-   python test/generar_estaciones.py
+   python -m test.generar_estaciones 
    ```
 
 2. **Ejecutar el algoritmo genético**:
    Corre el flujo principal del algoritmo:
 
    ```bash
-   python test/test_main.py
+   python main.py
    ```
 
 3. **Visualizar resultados**:
    Los resultados incluyen:
    - Mapas interactivos generados con `folium`.
    - Gráficas de evolución del fitness generadas con `matplotlib`.
+   - KPIs de las corridas en archivo .xlsx
 
 ---
 
@@ -114,7 +115,8 @@ Cada tarea tiene los siguientes atributos:
   "pickup": [lat, lon],
   "dropoff": [lat, lon],
   "peso": 2.5,
-  "tiempo_max": 900
+  "tiempo_max": 900,
+  "recarga_previa"
 }
 ```
 
@@ -126,7 +128,6 @@ Cada dron tiene los siguientes atributos:
 {
   "id": 0,
   "posicion_inicial": [lat, lon],
-  "capacidad_bateria": 10000
 }
 ```
 
@@ -136,7 +137,6 @@ Cada estación tiene los siguientes atributos:
 
 ```json
 {
-  "id": 0,
   "ubicacion": [lat, lon]
 }
 ```
@@ -146,7 +146,7 @@ Cada estación tiene los siguientes atributos:
 ## **Resultados Esperados**
 
 - **Optimización energética**: Minimización del consumo total de energía de la flota.
-- **Cumplimiento de tiempos**: Reducción de penalizaciones por incumplimiento de plazos.
+- **Cumplimiento de tiempos**: Los individuos que no cumplen con los tiempos previstos se descartan
 - **Visualización**: Mapas interactivos que muestran las rutas optimizadas.
 
 ---
@@ -167,24 +167,3 @@ Si deseas contribuir al proyecto:
 ## **Licencia**
 
 Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para más detalles.
-
-- Falta por hacer:
-
-- VER FUNCIÓN FITNESS
-  Usar al función de calcular energía una sola vez con los tres parametros (a la vez)
-
-Calculamos la energia para L1,L2,L3
-Si el dron no tiene bateria para hacer el viaje:
-Si tiene la bateria al 100%: --> #Significa que el dron esta en pos inicial o en una estación
-Penalizar (ese viaje no se puede hacer)
-Sino, ir a la estación de carga mas cercana y verificar que desde la estación, con el 100%, pueda completar la tarea (sino, penalizar)
-Si el dron tiene bateria:
-Hace el viaje (asegura que llega a L3).
-
-La mejor version es como quedo en simulation.py. Hay que ver L3 porque no siempre vamos a L3 y contamos como que es energia gastada igualmente.
-
-- Crear los puntos fijos de las estaciones de carga (usar API)
-- Testear el programa buscando que el algoritmo converga a una solución que sepamos que es correcta (Ruta)
-- Asignar los tiempos máximos de realización de tarea a cada dron. Cada tarea tiene un tiempo límite = tiempo ideal entre L1,L2,L3 + tiempo de tolerancia (10 min) + tiempo de cocción (10-30 min random). (ver de hacerlo en la funcion fitness)
-- Decidir qué ocurre si el dron se retrasa en una tarea --> ¿Se desestima su fitness? ¿Lo reduce porcentualmente? --> REALIZAR PRUEBAS para evaluar resultados.
-- Falta ver como se agregan las rutas de los drones a las estaciones de carga (estaria bueno que no queden dentro de la funcion fitness. sino que queden funciones separadas)
